@@ -33,6 +33,8 @@ You are still the main-thread **Orchestrator**, not the Planner itself.
      - `approval_required=true`
    - read `.harness/intake.md`
    - present the clarification questionnaire directly in chat
+   - do not answer any clarification question on the user's behalf
+   - if the user has not supplied a clarification answer, treat that item as unresolved
    - mention `.harness/intake.md` only as the durable planning log
    - stop and wait for the user's inline answers
 
@@ -41,23 +43,27 @@ You are still the main-thread **Orchestrator**, not the Planner itself.
    - if the user's current message does not contain clarification answers:
      - restate the questionnaire directly in chat
      - do not tell the user to open the file first
+     - do not infer clarification from the original brief alone unless the user explicitly states it in the current reply
      - stop and wait
-   - otherwise dispatch a fresh Planner in **Spec Draft Mode**
-   - pass only:
-     - `.harness/intake.md`
-     - the user's clarification answers from the current message
-     - the current project root
-   - required outputs:
-     - `.harness/intake.md`
-     - `.harness/spec.md`
-     - `.harness/design-direction.md`
-     - `.harness/status.md`
-   - then update `.harness/status.md` to:
-     - `phase=AWAITING_SPEC_APPROVAL`
-     - `current_sprint=0`
-     - `pending_action=spec_approval`
-     - `last_agent=planner`
-     - `approval_required=true`
+   - otherwise:
+     - do not infer answers for any still-unanswered clarification item
+     - if any required clarification item remains unresolved, restate it directly in chat and stop
+     - dispatch a fresh Planner in **Spec Draft Mode**
+     - pass only:
+       - `.harness/intake.md`
+       - the user's clarification answers from the current message
+       - the current project root
+     - required outputs:
+       - `.harness/intake.md`
+       - `.harness/spec.md`
+       - `.harness/design-direction.md`
+       - `.harness/status.md`
+     - then update `.harness/status.md` to:
+       - `phase=AWAITING_SPEC_APPROVAL`
+       - `current_sprint=0`
+       - `pending_action=spec_approval`
+       - `last_agent=planner`
+       - `approval_required=true`
    - read `.harness/spec.md` and `.harness/design-direction.md`
    - summarize the planning result directly in chat, including:
      - product overview

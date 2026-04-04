@@ -1,6 +1,6 @@
 # Auto-Harness
 
-Auto-Harness is a Claude Code plugin for long-running implementation loops. It keeps the main thread focused on orchestration while fresh `Planner`, `Generator`, and `Evaluator` subagents coordinate through durable `.harness/` artifacts instead of chat memory.
+This plugin is based on Anthropic's article, [Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps), and adapts those ideas into a Claude Code plugin with commands, hooks, durable artifacts, and role-pure subagents.
 
 The design goal is simple: planning, implementation, QA, fixes, and resume/recovery should survive long sessions, compaction, and context resets without turning the main thread into a giant prompt dump.
 

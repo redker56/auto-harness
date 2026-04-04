@@ -113,6 +113,8 @@ When working with sprint QA artifacts, also use:
   - prefer numbered questions
   - tell the user they can answer inline in one message
   - mention `.harness/intake.md` only as the durable log, not as required reading
+  - do **not** answer any clarification question on the user's behalf
+  - if the user has not supplied a clarification answer, treat that item as unresolved
 - Stop and wait for the user's answers
 
 ### If `.harness/status.md` already exists
@@ -131,8 +133,11 @@ When working with sprint QA artifacts, also use:
 - If the user's current message does **not** contain substantive clarification answers:
   - restate the clarification questions directly in chat
   - do **not** tell the user to go read the file on their own
+  - do **not** infer clarification from the original brief alone unless the user explicitly states it in the current reply
   - stop and wait for the answers
 - If the user's current message **does** contain clarification answers:
+  - do **not** infer answers for any still-unanswered clarification item
+  - if any required clarification item remains unresolved, restate it directly in chat and stop
   - dispatch a **fresh** `auto-harness:planner` subagent in **Spec Draft Mode**
   - pass only:
     - `.harness/intake.md`
