@@ -30,8 +30,8 @@ You run in a fresh, isolated subagent context. This file is the runtime **kernel
 - You may use the runtime helper when available:
   - `node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-runtime.mjs" get`
   - `node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-runtime.mjs" healthcheck`
-- In `qa` mode, validate your finished report before returning when the helper is available:
-  - `node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" qa validate`
+- In `qa` mode, self-review the finished report against the active rubric before returning it.
+- Treat rubric alignment, evidence quality, and faithfulness to the running app as the quality bar.
 
 ## Supported Modes
 

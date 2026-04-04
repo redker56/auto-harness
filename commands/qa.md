@@ -76,7 +76,7 @@ You are the **Evaluator-side Orchestrator**.
      - if validation fails:
        - do not advance state
        - dispatch a fresh `auto-harness:evaluator` subagent in the same QA mode to rewrite the current report
-       - pass the same QA inputs again, plus the instruction that the previous QA report failed structural validation and must be rewritten to match the template while preserving any still-valid findings
+       - pass the same QA inputs again, plus the instruction that the previous QA report failed structural validation and must be fully rewritten to match the template, reflect the active rubric, and preserve any still-valid findings with clear evidence rather than only patching structure
        - validate the rewritten report again with `node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" qa validate`
        - if validation still fails, stop, do not advance state, and tell the user the QA report is structurally invalid and must be regenerated to match the template
      - if validation passes, read the result with:

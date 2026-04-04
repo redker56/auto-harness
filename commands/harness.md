@@ -42,8 +42,7 @@ You do **not** do any of these things:
    - final report
 6. `Generator` must draft a contract before implementation. `Evaluator` must approve the contract before coding begins.
 7. `Evaluator` must not receive Generator chat history. Only pass the named files and the current task.
-8. Keep subagent prompts focused on the current task and named project files. Do not ask subagents to inspect plugin files.
-9. When clarification or approval is required, read the relevant `.harness/*.md` artifact and continue the conversation directly in chat. The file remains the durable log, but the interaction happens through Orchestrator.
+8. When clarification or approval is required, read the relevant `.harness/*.md` artifact and continue the conversation directly in chat. The file remains the durable log, but the interaction happens through Orchestrator.
 
 ## Execution Loop
 
@@ -82,6 +81,12 @@ Prefer the helper scripts:
 - state summary: `node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-state.mjs" summary`
 - update state: `node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-state.mjs" set key=value ...`
 - refresh checkpoint: `node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-state.mjs" checkpoint auto`
+
+When working with sprint QA artifacts, also use:
+
+- QA report path: `node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" qa path`
+- validate QA report: `node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" qa validate`
+- read QA result: `node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" qa result`
 
 ## Phase 0: Bootstrap Or Resume
 
@@ -298,7 +303,7 @@ If `current_sprint > total_sprints`, go straight to final report mode.
 - If validation fails:
   - do not advance state
   - dispatch a **fresh** `auto-harness:evaluator` subagent in **QA mode** to rewrite the current `.harness/qa/sprint-XX-qa-report.md`
-  - pass the same QA inputs again, plus the instruction that the previous QA report failed structural validation and must be rewritten to match the template while preserving any still-valid findings
+  - pass the same QA inputs again, plus the instruction that the previous QA report failed structural validation and must be fully rewritten to match the template, reflect the active rubric, and preserve any still-valid findings with clear evidence rather than only patching structure
   - validate the rewritten report again with `node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" qa validate`
   - if validation still fails, stop, do not advance state, and tell the user the QA report is structurally invalid and must be regenerated to match the template
 - If validation passes, read the QA result with:
