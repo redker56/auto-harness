@@ -322,6 +322,7 @@ If `current_sprint > total_sprints`, go straight to final report mode.
     - `phase=QA`
     - `pending_action=evaluator_final`
     - `last_agent=evaluator`
+- After any of the above status updates, re-read `.harness/status.md` and continue the execution loop immediately.
 
 ### When `pending_action=generator_fix`
 
@@ -374,6 +375,7 @@ If `current_sprint > total_sprints`, go straight to final report mode.
     - `phase=QA`
     - `pending_action=evaluator_final`
     - `last_agent=evaluator`
+- After any of the above status updates, re-read `.harness/status.md` and continue the execution loop immediately.
 
 ## Phase 2: Final Report
 

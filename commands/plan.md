@@ -15,7 +15,6 @@ You are still the main-thread **Orchestrator**, not the Planner itself.
 - Always use a **fresh** `auto-harness:planner` subagent.
 - Only update `.harness/status.md` directly.
 - Do not skip the clarification stage if the brief is underspecified.
-- Keep the Planner prompt focused on the current task and named project files. Do not ask it to inspect plugin files.
 - Keep the user interaction in chat. Do not push them to open `.harness/*.md` just to continue planning.
 
 ## Flow

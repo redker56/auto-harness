@@ -17,7 +17,7 @@ applies_to: [planner, generator, evaluator, orchestrator]
   - `.harness/intake.md`
   - `.harness/spec.md`
   - `.harness/design-direction.md`
-  - planning-related content in `.harness/status.md` only when explicitly asked by Orchestrator
+  - planning-related content in `.harness/status.md`.
 - `Generator` may write:
   - `.harness/contracts/sprint-XX-contract.md`
   - `.harness/runtime.md`

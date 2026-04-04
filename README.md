@@ -1,6 +1,6 @@
 # Auto-Harness
 
-Auto-Harness is a local Claude Code plugin for long-running implementation loops. It keeps the main thread focused on orchestration while fresh `Planner`, `Generator`, and `Evaluator` subagents coordinate through durable `.harness/` artifacts instead of chat memory.
+Auto-Harness is a Claude Code plugin for long-running implementation loops. It keeps the main thread focused on orchestration while fresh `Planner`, `Generator`, and `Evaluator` subagents coordinate through durable `.harness/` artifacts instead of chat memory.
 
 The design goal is simple: planning, implementation, QA, fixes, and resume/recovery should survive long sessions, compaction, and context resets without turning the main thread into a giant prompt dump.
 
@@ -101,7 +101,7 @@ If you do not see plugin-related commands in Claude Code, update Claude Code fir
 2. Add the GitHub repository as a plugin marketplace:
 
 ```text
-/plugin marketplace add <github-owner>/<repo>
+/plugin marketplace add redker56/auto-harness
 ```
 
 1. Install the plugin from that marketplace:
@@ -114,35 +114,12 @@ If you do not see plugin-related commands in Claude Code, update Claude Code fir
 2. Run the main command:
 
 ```text
-/auto-harness:harness Build a small internal dashboard for support agents with search, ticket detail, and activity history.
+/auto-harness:harness <your product brief or clarification reply>
 ```
 
 1. Answer the clarification questions inline in chat.
 2. Approve the generated spec inline in chat, or reply with revisions.
 3. Let the sprint loop continue until the final report is produced.
-
-The marketplace name in this repository is `auto-harness-marketplace`. Replace `<github-owner>/<repo>` with the published GitHub repository, for example `your-name/auto-harness`.
-
-### For Local Development
-
-If you are developing or testing the plugin locally before publishing it, load it with `--plugin-dir` instead:
-
-```bash
-claude --plugin-dir /absolute/path/to/auto-harness
-```
-
-When you change plugin files during development, reload without restarting:
-
-```text
-/reload-plugins
-```
-
-Because this is a plugin, its commands are namespaced by the plugin name:
-
-- `/auto-harness:harness`
-- `/auto-harness:plan`
-- `/auto-harness:build`
-- `/auto-harness:qa`
 
 ### Minimal Operator Mental Model
 
@@ -284,7 +261,9 @@ The command layer uses `phase`, `current_sprint`, `total_sprints`, and `pending_
 ```text
 auto-harness/
 |-- .claude-plugin/
+|   |-- marketplace.json
 |   `-- plugin.json
+|-- LICENSE
 |-- agents/
 |   |-- planner.md
 |   |-- generator.md
@@ -326,7 +305,7 @@ auto-harness/
 
 Planner receives protocols, clarification guidance, catalogs, templates, and packs. Generator receives protocols, implementation templates, and packs. Evaluator receives protocols, rubrics, evaluation templates, and packs.
 
-Module injection is discovered automatically from `modules/` by directory and `applies_to` frontmatter. If you add a new module file with the correct `applies_to` value, it becomes live without patching a hardcoded file list.
+Module files are discovered automatically from the existing supported `modules/` subdirectories and filtered by `applies_to` frontmatter. If you add a new module file under one of those supported directories with the correct `applies_to` value, it becomes live without patching a per-file list. If you introduce a new bundle category or module directory, update the injection configuration in `scripts/harness-lib.mjs` as well.
 
 ## Hooks And Resume Behavior
 
@@ -340,7 +319,7 @@ This is what makes Auto-Harness resilient to long sessions and context compactio
 
 ## Playwright MCP
 
-The plugin ships a local `.mcp.json` that starts Playwright through:
+The plugin ships a `.mcp.json` that starts Playwright through:
 
 ```text
 npx -y @playwright/mcp@latest

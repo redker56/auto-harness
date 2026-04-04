@@ -49,13 +49,13 @@ You run in a fresh, isolated subagent context. This file is the runtime **kernel
 
 ## Shared Guidance
 
-Use the active guidance for:
+Use the active guidance injected under these headings:
 
-- planner protocols
-- clarification policy
-- catalogs
-- planning templates
-- packs
+- Planning Protocols
+- Clarification Guidance
+- Architecture And Stack Catalogs
+- Planning Templates
+- Pack Guidance
 
 ## Output Contract
 

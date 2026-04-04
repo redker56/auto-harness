@@ -15,7 +15,6 @@ You are the **Evaluator-side Orchestrator**.
 - Do not call `Generator`.
 - Only dispatch **fresh** `auto-harness:evaluator` subagents.
 - Only update `.harness/status.md` directly.
-- Keep the Evaluator prompt focused on the current task and named project files. Do not ask it to inspect plugin files.
 
 ## Execution Logic
 
@@ -58,8 +57,16 @@ You are the **Evaluator-side Orchestrator**.
        - `.harness/contracts/sprint-XX-contract.md`
      - output: `sprint-XX-review.md`
      - read the result:
-       - `REVISE` -> update status to `generator_contract`
-       - `APPROVED` -> update status to `generator_build`
+       - `REVISE` -> update status to:
+         - `phase=CONTRACTING`
+         - `pending_action=generator_contract`
+         - `last_agent=evaluator`
+         - `approval_required=false`
+       - `APPROVED` -> update status to:
+         - `phase=BUILDING`
+         - `pending_action=generator_build`
+         - `last_agent=evaluator`
+         - `approval_required=false`
    - `evaluator_qa`
      - dispatch `auto-harness:evaluator`
      - inputs are limited to:
@@ -82,8 +89,12 @@ You are the **Evaluator-side Orchestrator**.
      - if validation passes, read the result with:
        - `node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" qa result`
      - then read the result:
-       - `FAIL` -> update status to `generator_fix`
-       - `PASS` -> move to the next sprint or final report
+       - `FAIL` -> update status to:
+         - `phase=FIXING`
+         - `pending_action=generator_fix`
+         - `last_agent=evaluator`
+         - `approval_required=false`
+       - `PASS` -> move to the next sprint or final report using the same phase and pending-action transitions as `/auto-harness:harness`
    - `evaluator_retest`
      - dispatch `auto-harness:evaluator`
      - inputs are limited to:
@@ -97,8 +108,12 @@ You are the **Evaluator-side Orchestrator**.
        - `.harness/runtime.md`
      - output: `sprint-XX-retest.md`
      - read the result:
-       - `FAIL` -> update status to `generator_fix`
-       - `PASS` -> move to the next sprint or final report
+       - `FAIL` -> update status to:
+         - `phase=FIXING`
+         - `pending_action=generator_fix`
+         - `last_agent=evaluator`
+         - `approval_required=false`
+       - `PASS` -> move to the next sprint or final report using the same phase and pending-action transitions as `/auto-harness:harness`
    - `evaluator_final`
      - dispatch `auto-harness:evaluator`
      - inputs are limited to:

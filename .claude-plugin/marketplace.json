@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Marketplace for the Auto-Harness Claude Code plugin.",
-    "version": "1.0.0"
+    "version": "0.1.0"
   },
   "plugins": [
     {
       "name": "auto-harness",
       "source": "./",
       "description": "Orchestrated long-running coding harness for Claude Code with agents, commands, hooks, scripts, and modules.",
-      "version": "1.0.0",
+      "version": "0.1.0",
       "author": {
         "name": "redker56"
       },

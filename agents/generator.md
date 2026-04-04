@@ -38,10 +38,10 @@ You run in a fresh, isolated subagent context. This file is the runtime **kernel
 
 ## Shared Guidance
 
-Use the active guidance for:
+Use the active guidance injected under these headings:
 
-- generator policy
-- packs
+- Generator Guidance
+- Pack Guidance
 
 ## Output Contract
 

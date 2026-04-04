@@ -15,7 +15,6 @@ You are the **Generator-side Orchestrator**.
 - Do not call `Evaluator`.
 - Only dispatch **fresh** `auto-harness:generator` subagents.
 - Only update `.harness/status.md` directly.
-- Keep the Generator prompt focused on the current task and named project files. Do not ask it to inspect plugin files.
 
 ## Execution Logic
 
@@ -59,7 +58,11 @@ You are the **Generator-side Orchestrator**.
        - `.harness/contracts/sprint-XX-review.md` if a review artifact already exists for this sprint
        - current sprint
      - output: `sprint-XX-contract.md`
-     - then update status to `evaluator_review`
+     - then update status to:
+       - `phase=CONTRACTING`
+       - `pending_action=evaluator_review`
+       - `last_agent=generator`
+       - `approval_required=false`
    - `generator_build`
      - dispatch `auto-harness:generator`
      - inputs are limited to:
@@ -69,7 +72,11 @@ You are the **Generator-side Orchestrator**.
        - `.harness/contracts/sprint-XX-contract.md`
        - `.harness/contracts/sprint-XX-review.md` if a review artifact exists for this sprint
      - outputs: code, `.harness/runtime.md`, `.harness/qa/sprint-XX-self-check.md`
-     - then update status to `evaluator_qa`
+     - then update status to:
+       - `phase=QA`
+       - `pending_action=evaluator_qa`
+       - `last_agent=generator`
+       - `approval_required=false`
    - `generator_fix`
      - dispatch `auto-harness:generator`
      - inputs are limited to:
@@ -81,5 +88,9 @@ You are the **Generator-side Orchestrator**.
        - `.harness/qa/sprint-XX-qa-report.md`
        - `.harness/runtime.md`
      - outputs: fixes and `.harness/qa/sprint-XX-fix-log.md`
-     - then update status to `evaluator_retest`
+     - then update status to:
+       - `phase=QA`
+       - `pending_action=evaluator_retest`
+       - `last_agent=generator`
+       - `approval_required=false`
 9. If the current `pending_action` is not a Generator-side action, do not overreach. Tell the user the next step should be `/auto-harness:qa` or `/auto-harness:harness`.

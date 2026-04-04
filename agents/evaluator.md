@@ -51,11 +51,11 @@ You run in a fresh, isolated subagent context. This file is the runtime **kernel
 
 ## Shared Guidance
 
-Use the active guidance for:
+Use the active guidance injected under these headings:
 
-- evaluator policy
-- rubrics
-- packs
+- Evaluator Guidance
+- Rubric Guidance
+- Pack Guidance
 
 ## Output Contract
 
