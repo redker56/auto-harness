@@ -2,8 +2,6 @@
 module: spec-template
 kind: template
 applies_to: [planner]
-exports:
-  - spec_template
 ---
 
 # Spec Template

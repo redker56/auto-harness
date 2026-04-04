@@ -2,8 +2,6 @@
 module: final-report-template
 kind: template
 applies_to: [evaluator]
-exports:
-  - final_report_template
 ---
 
 # Final Report Template

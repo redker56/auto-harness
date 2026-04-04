@@ -2,8 +2,6 @@
 module: saas-product-pack
 kind: pack
 applies_to: [planner, generator, evaluator]
-exports:
-  - saas_defaults
 ---
 
 # SaaS Product Pack

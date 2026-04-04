@@ -2,8 +2,6 @@
 module: runtime-template
 kind: template
 applies_to: [generator]
-exports:
-  - runtime_template
 ---
 
 # Runtime Template
@@ -14,8 +12,8 @@ working_directory: .
 install_command: <command or none>
 build_command: <command or none>
 start_command: <command>
-app_url: <url>
-healthcheck_command: <command or none>
+access_url: <url>
+healthcheck_method: http-get
 healthcheck_url: <url or none>
 ---
 

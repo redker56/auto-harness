@@ -2,13 +2,11 @@
 module: consistency-patterns
 kind: catalog
 applies_to: [planner]
-exports:
-  - consistency_conventions
 ---
 
 # Consistency Patterns
 
-Use this catalog to lock a small number of project-wide patterns early.
+Use this catalog to identify project-wide conventions worth locking early.
 
 Typical patterns worth standardizing:
 
@@ -19,4 +17,4 @@ Typical patterns worth standardizing:
 - component state versus store state boundaries
 - persistence access through shared services rather than direct UI imports
 
-Avoid over-specifying patterns before they are needed; standardize only the ones that affect multiple files or teams.
+Avoid over-specifying patterns before they are needed; standardize only the ones that affect multiple files or sprints.

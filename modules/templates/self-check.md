@@ -2,8 +2,6 @@
 module: self-check-template
 kind: template
 applies_to: [generator]
-exports:
-  - self_check_template
 ---
 
 # Self-Check Template

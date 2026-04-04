@@ -2,9 +2,6 @@
 module: file-ownership
 kind: protocol
 applies_to: [planner, generator, evaluator, orchestrator]
-exports:
-  - ownership_rules
-  - durable_handoff_rules
 ---
 
 # File Ownership

@@ -2,8 +2,6 @@
 module: clarification-product
 kind: policy
 applies_to: [planner]
-exports:
-  - product_question_families
 ---
 
 # Product Clarification

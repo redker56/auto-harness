@@ -2,9 +2,6 @@
 module: visual-design
 kind: rubric
 applies_to: [evaluator]
-exports:
-  - visual_scoring_rules
-  - ai_slop_flags
 ---
 
 # Visual Design Rubric

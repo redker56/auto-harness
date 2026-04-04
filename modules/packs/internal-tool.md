@@ -2,8 +2,6 @@
 module: internal-tool-pack
 kind: pack
 applies_to: [planner, generator, evaluator]
-exports:
-  - internal_tool_defaults
 ---
 
 # Internal Tool Pack

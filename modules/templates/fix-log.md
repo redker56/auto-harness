@@ -2,8 +2,6 @@
 module: fix-log-template
 kind: template
 applies_to: [generator]
-exports:
-  - fix_log_template
 ---
 
 # Fix Log Template

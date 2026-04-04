@@ -2,9 +2,6 @@
 module: bug-severity
 kind: rubric
 applies_to: [evaluator]
-exports:
-  - severity_levels
-  - functional_correctness_rules
 ---
 
 # Bug Severity

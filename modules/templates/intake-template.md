@@ -2,8 +2,6 @@
 module: intake-template
 kind: template
 applies_to: [planner]
-exports:
-  - intake_template
 ---
 
 # Intake Template

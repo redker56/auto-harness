@@ -2,15 +2,13 @@
 module: clarification-constraints
 kind: policy
 applies_to: [planner]
-exports:
-  - constraint_question_families
 ---
 
 # Constraints Clarification
 
 Ask for constraints that could invalidate an otherwise good design:
 
-- delivery deadline or sprint sizing constraints
+- delivery deadline or sprint-sizing constraints
 - hosting or environment limits
 - offline, local-only, or air-gapped operation
 - accessibility requirements

@@ -2,14 +2,11 @@
 module: stack-options
 kind: catalog
 applies_to: [planner]
-exports:
-  - stack_families
-  - default_stack_guidance
 ---
 
 # Stack Options
 
-Use this catalog to narrow the stack only after product and architecture needs are clear.
+Use this catalog to narrow the implementation stack only after the product and architecture shape are clear.
 
 ## Common Stack Families
 
@@ -19,8 +16,9 @@ Use this catalog to narrow the stack only after product and architecture needs a
 - Node CLI or TUI with filesystem-based persistence
 - Python or Node service with separate SPA frontend
 
-## Default Guidance
+## Selection Guidance
 
 - Prefer browser-only for small single-user tools that do not need cross-device sync.
 - Prefer a simple API plus database for multi-user or cross-device products.
-- For existing repos, preserve the current stack unless migration is part of the brief.
+- Prefer preserving the current repo stack when refactoring, unless the migration itself is part of the brief.
+- Avoid introducing hosted dependencies unless they solve a real product or deployment constraint.

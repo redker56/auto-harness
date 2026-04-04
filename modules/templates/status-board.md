@@ -2,9 +2,6 @@
 module: status-board-template
 kind: template
 applies_to: [planner, orchestrator]
-exports:
-  - status_frontmatter_shape
-  - status_body_shape
 ---
 
 # Status Board Template
@@ -12,9 +9,18 @@ exports:
 `status.md` frontmatter should preserve these stable fields whenever known:
 
 ```yaml
+phase: <phase>
+current_sprint: <number>
+total_sprints: <number>
+pending_action: <action>
+last_agent: <planner|generator|evaluator|orchestrator>
 selected_pack: default
 selected_rubric: default-grading
+updated_at: <ISO-8601 timestamp>
+approval_required: <true|false>
 ```
+
+## State Shapes
 
 Clarification state shape:
 
@@ -48,6 +54,70 @@ approval_required: true
 ---
 ```
 
+Contracting state shape:
+
+```yaml
+---
+phase: CONTRACTING
+current_sprint: <sprint number>
+total_sprints: <number of planned sprints>
+pending_action: generator_contract | evaluator_review
+last_agent: generator | evaluator | orchestrator
+selected_pack: <pack name>
+selected_rubric: <rubric name>
+updated_at: <ISO-8601 timestamp>
+approval_required: false
+---
+```
+
+Building state shape:
+
+```yaml
+---
+phase: BUILDING
+current_sprint: <sprint number>
+total_sprints: <number of planned sprints>
+pending_action: generator_build
+last_agent: evaluator
+selected_pack: <pack name>
+selected_rubric: <rubric name>
+updated_at: <ISO-8601 timestamp>
+approval_required: false
+---
+```
+
+QA state shape:
+
+```yaml
+---
+phase: QA
+current_sprint: <sprint number>
+total_sprints: <number of planned sprints>
+pending_action: evaluator_qa | evaluator_retest | evaluator_final
+last_agent: generator | evaluator
+selected_pack: <pack name>
+selected_rubric: <rubric name>
+updated_at: <ISO-8601 timestamp>
+approval_required: false
+---
+```
+
+Fixing state shape:
+
+```yaml
+---
+phase: FIXING
+current_sprint: <sprint number>
+total_sprints: <number of planned sprints>
+pending_action: generator_fix
+last_agent: evaluator
+selected_pack: <pack name>
+selected_rubric: <rubric name>
+updated_at: <ISO-8601 timestamp>
+approval_required: false
+---
+```
+
 Done state shape:
 
 ```yaml
@@ -64,9 +134,18 @@ approval_required: false
 ---
 ```
 
-Body guidance:
+## Body Guidance
 
-- summarize the current brief and planning state
+Body sections should typically include:
+
+- `# Planning Status`
+- `## Current State`
+- `## Sprint Board`
+- `## Key Files`
+
+Guidance:
+
+- summarize the current brief and planning or execution state
 - point to `.harness/intake.md` as the durable clarification log
 - show the sprint board once the spec exists
 - point to `.harness/final/qa-final-report.md` when the harness is done

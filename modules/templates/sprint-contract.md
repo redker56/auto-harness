@@ -2,8 +2,6 @@
 module: sprint-contract-template
 kind: template
 applies_to: [generator]
-exports:
-  - sprint_contract_template
 ---
 
 # Sprint Contract Template
@@ -12,6 +10,9 @@ exports:
 # Sprint XX Contract
 
 ## Summary
+- ...
+
+## Primary Path
 - ...
 
 ## In Scope
@@ -39,5 +40,6 @@ exports:
 
 Guidance:
 
+- Name the sprint's primary end-to-end user path so Evaluator can exercise it consistently.
 - Keep behavior statements concrete enough for Evaluator to test.
 - Name out-of-scope items so contract review can distinguish omission from intentional deferral.

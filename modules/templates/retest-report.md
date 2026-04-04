@@ -2,8 +2,6 @@
 module: retest-report-template
 kind: template
 applies_to: [evaluator]
-exports:
-  - retest_report_template
 ---
 
 # Retest Report Template

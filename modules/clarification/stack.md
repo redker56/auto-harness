@@ -2,13 +2,11 @@
 module: clarification-stack
 kind: policy
 applies_to: [planner]
-exports:
-  - stack_question_families
 ---
 
 # Stack Clarification
 
-Ask stack questions when they materially affect implementation scope, runtime setup, or hosting.
+Ask stack questions when they materially affect implementation scope, runtime setup, hosting, or contributor workflow.
 
 Typical question families:
 
@@ -17,6 +15,7 @@ Typical question families:
 - database choice and hosting expectations
 - runtime environment: Node, Python, browser-only, desktop, terminal
 - deployment target: local machine, Vercel, Fly, Docker, internal server
+- testing expectations and tooling constraints
 
 Default behavior:
 

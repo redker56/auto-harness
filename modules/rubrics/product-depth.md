@@ -2,8 +2,6 @@
 module: product-depth
 kind: rubric
 applies_to: [evaluator]
-exports:
-  - product_depth_rules
 ---
 
 # Product Depth Rubric

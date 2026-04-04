@@ -2,10 +2,6 @@
 module: generator-contract
 kind: protocol
 applies_to: [generator]
-exports:
-  - generator_modes
-  - runtime_contract_rules
-  - implementation_constraints
 ---
 
 # Generator Contract

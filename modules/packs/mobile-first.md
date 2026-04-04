@@ -2,8 +2,6 @@
 module: mobile-first-pack
 kind: pack
 applies_to: [planner, generator, evaluator]
-exports:
-  - mobile_first_defaults
 ---
 
 # Mobile-First Pack

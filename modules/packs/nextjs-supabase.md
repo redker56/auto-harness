@@ -2,8 +2,6 @@
 module: nextjs-supabase-pack
 kind: pack
 applies_to: [planner, generator, evaluator]
-exports:
-  - nextjs_supabase_defaults
 ---
 
 # Next.js + Supabase Pack

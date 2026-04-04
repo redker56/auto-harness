@@ -2,9 +2,6 @@
 module: default-grading
 kind: rubric
 applies_to: [evaluator]
-exports:
-  - score_dimensions
-  - thresholds
 ---
 
 # Default Grading

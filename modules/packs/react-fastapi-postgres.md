@@ -2,8 +2,6 @@
 module: react-fastapi-postgres-pack
 kind: pack
 applies_to: [planner, generator, evaluator]
-exports:
-  - react_fastapi_postgres_defaults
 ---
 
 # React + FastAPI + Postgres Pack

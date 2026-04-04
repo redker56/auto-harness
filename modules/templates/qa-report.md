@@ -2,8 +2,6 @@
 module: qa-report-template
 kind: template
 applies_to: [evaluator]
-exports:
-  - qa_report_template
 ---
 
 # QA Report Template
@@ -12,6 +10,11 @@ exports:
 # Sprint XX QA Report
 
 Result: PASS | FAIL
+
+## Primary Path Exercise
+- Flow: ...
+- Result: PASS | FAIL
+- Evidence: ...
 
 ## Contract Behaviors
 | # | Behavior | Result | Evidence |
@@ -24,10 +27,15 @@ Result: PASS | FAIL
 ## Hard-Fail Gates
 | Gate | Status | Evidence |
 | --- | --- | --- |
+| Locked architecture respected | PASS | ... |
 
 ## Scorecard
 | Dimension | Score | Threshold | Pass? | Notes |
 | --- | --- | --- | --- | --- |
+| Product depth | ... | ... | PASS | ... |
+| Functional correctness | ... | ... | PASS | ... |
+| Visual design | ... | ... | PASS | ... |
+| Code quality | ... | ... | PASS | ... |
 
 ## Verdict
 - ...

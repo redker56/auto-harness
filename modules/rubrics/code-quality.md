@@ -2,8 +2,6 @@
 module: code-quality
 kind: rubric
 applies_to: [evaluator]
-exports:
-  - code_quality_rules
 ---
 
 # Code Quality Rubric

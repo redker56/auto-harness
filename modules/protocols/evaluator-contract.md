@@ -2,10 +2,6 @@
 module: evaluator-contract
 kind: protocol
 applies_to: [evaluator]
-exports:
-  - evaluator_modes
-  - skepticism_rules
-  - scoring_rules
 ---
 
 # Evaluator Contract
@@ -26,7 +22,8 @@ exports:
 
 ## QA Execution Rules
 
-- In `qa` and `retest` mode, exercise the primary path in the running app before issuing a verdict.
+- In `qa` mode, exercise the sprint's primary path end-to-end against the running app before issuing `PASS` or `FAIL`.
+- If you cannot exercise the primary path from the running app, do not pass on file inspection alone. Record the verification gap and fail the sprint.
 - Use Playwright MCP, runtime health checks, or command-line validation as needed to interact with the real app.
 - Do not issue `PASS` based on files alone when the contract expects user-visible behavior.
 - Browser-action evidence should describe what was clicked, entered, navigated, or observed.
