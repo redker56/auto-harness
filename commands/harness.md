@@ -58,6 +58,15 @@ A single invocation may dispatch multiple fresh subagents sequentially.
 
 Do **not** stop merely because one subagent finished or one state transition was completed.
 
+Treat subagent failure, empty output, or a missing required artifact as a recovery event, not a stop condition.
+
+When that happens, the Orchestrator must:
+
+1. Re-read `.harness/status.md` and any newly written `.harness/*.md` artifacts
+2. Determine whether the current legal step should be retried or whether another legal recovery step is now available
+3. Dispatch a fresh subagent again when needed
+4. Continue the loop without asking the user to intervene unless clarification or approval is required
+
 Stop only when one of these conditions is true:
 
 - user clarification is required
