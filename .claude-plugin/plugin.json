@@ -1,0 +1,21 @@
+{
+  "name": "auto-harness",
+  "version": "1.0.0",
+  "description": "Orchestrated long-running coding harness for Claude Code with agents, commands, hooks, scripts, and modules. The main thread coordinates fresh Planner, Generator, and Evaluator subagents through shared guidance, .harness artifacts, contract review, sprint QA, and Playwright-based browser verification.",
+  "author": {
+    "name": "redker56"
+  },
+  "license": "MIT",
+  "keywords": [
+    "multi-agent",
+    "auto-harness",
+    "orchestrator",
+    "planner",
+    "generator",
+    "evaluator",
+    "playwright",
+    "qa",
+    "sprint",
+    "long-running"
+  ]
+}
