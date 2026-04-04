@@ -45,6 +45,26 @@ You do **not** do any of these things:
 8. Keep subagent prompts focused on the current task and named project files. Do not ask subagents to inspect plugin files.
 9. When clarification or approval is required, read the relevant `.harness/*.md` artifact and continue the conversation directly in chat. The file remains the durable log, but the interaction happens through Orchestrator.
 
+## Execution Loop
+
+In a single `/auto-harness:harness` invocation, keep advancing the harness by repeating this cycle:
+
+1. Read `.harness/status.md`
+2. Execute the current legal action
+3. Update `.harness/status.md`
+4. Re-read `.harness/status.md` and continue
+
+A single invocation may dispatch multiple fresh subagents sequentially.
+
+Do **not** stop merely because one subagent finished or one state transition was completed.
+
+Stop only when one of these conditions is true:
+
+- user clarification is required
+- spec approval or revision feedback is required
+- a QA report remains structurally invalid after the rewrite attempt
+- `phase=DONE`
+
 ## Status Tooling
 
 Prefer the helper scripts:
@@ -121,6 +141,10 @@ Prefer the helper scripts:
     - goals and non-goals
     - locked architecture and stack choices
     - total sprint count and sprint themes
+    - design direction:
+      - product mood and visual principles
+      - layout and interaction direction
+      - anti-patterns to avoid
     - any major open tradeoffs
   - ask the user to either:
     - confirm the spec inline
@@ -150,10 +174,19 @@ Prefer the helper scripts:
     - `last_agent=planner`
     - `approval_required=true`
   - read the revised `.harness/spec.md` and `.harness/design-direction.md`
-  - present the revised approval summary directly in chat
+  - present the revised approval summary directly in chat, including:
+    - product overview
+    - goals and non-goals
+    - locked architecture and stack choices
+    - total sprint count and sprint themes
+    - design direction:
+      - product mood and visual principles
+      - layout and interaction direction
+      - anti-patterns to avoid
+    - any major open tradeoffs
   - ask for direct approval or more concrete revisions inline
 - Otherwise, if the user's current message does **not** clearly confirm the spec:
-  - briefly restate the current spec summary
+  - briefly restate the current spec summary, including the current design direction summary
   - ask for direct approval or concrete revisions in chat
   - do **not** require the user to inspect the file manually before replying
 - Otherwise, if the user's current message **does** clearly confirm the spec:
@@ -242,7 +275,9 @@ If `current_sprint > total_sprints`, go straight to final report mode.
 - Pass only:
   - `.harness/intake.md`
   - `.harness/spec.md`
+  - `.harness/design-direction.md`
   - `.harness/contracts/sprint-XX-contract.md`
+  - `.harness/contracts/sprint-XX-review.md` if a review artifact exists for this sprint
   - `.harness/qa/sprint-XX-self-check.md`
   - `.harness/runtime.md`
   - the current sprint number
@@ -284,6 +319,7 @@ If `current_sprint > total_sprints`, go straight to final report mode.
   - `.harness/contracts/sprint-XX-contract.md`
   - `.harness/contracts/sprint-XX-review.md` if a review artifact exists for this sprint
   - `.harness/qa/sprint-XX-qa-report.md`
+  - `.harness/runtime.md`
   - the current sprint number
   - the instruction that this is **fix mode**
 - Expected output:
@@ -300,7 +336,9 @@ If `current_sprint > total_sprints`, go straight to final report mode.
 - Pass only:
   - `.harness/intake.md`
   - `.harness/spec.md`
+  - `.harness/design-direction.md`
   - `.harness/contracts/sprint-XX-contract.md`
+  - `.harness/contracts/sprint-XX-review.md` if a review artifact exists for this sprint
   - `.harness/qa/sprint-XX-qa-report.md`
   - `.harness/qa/sprint-XX-fix-log.md`
   - `.harness/runtime.md`

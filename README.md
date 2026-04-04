@@ -162,7 +162,7 @@ The default command. It can handle:
 - spec approval
 - later resume of the current sprint state
 
-Use this when you want the orchestrator to choose the next legal step automatically.
+Use this when you want the orchestrator to choose the next legal step automatically and keep advancing through multiple legal steps in the same invocation until it hits a user-blocking state, a structural failure that needs intervention, or `DONE`.
 
 ### `/auto-harness:plan <brief-or-clarification-answers>`
 

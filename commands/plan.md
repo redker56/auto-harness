@@ -60,7 +60,16 @@ You are still the main-thread **Orchestrator**, not the Planner itself.
      - `last_agent=planner`
      - `approval_required=true`
    - read `.harness/spec.md` and `.harness/design-direction.md`
-   - summarize the planning result directly in chat
+   - summarize the planning result directly in chat, including:
+     - product overview
+     - goals and non-goals
+     - locked architecture and stack choices
+     - total sprint count and sprint themes
+     - design direction:
+       - product mood and visual principles
+       - layout and interaction direction
+       - anti-patterns to avoid
+     - any major open tradeoffs
    - ask for direct approval or specific revisions inline
    - mention `.harness/spec.md` only as the durable artifact
 
@@ -91,11 +100,20 @@ You are still the main-thread **Orchestrator**, not the Planner itself.
        - `pending_action=spec_approval`
        - `last_agent=planner`
        - `approval_required=true`
-     - read the revised `.harness/spec.md` and `.harness/design-direction.md`
-     - summarize the revised planning result directly in chat
-     - ask for direct approval or more revisions inline
-     - mention `.harness/spec.md` only as the durable artifact
-   - otherwise restate a brief summary and ask for approval or revisions inline
+    - read the revised `.harness/spec.md` and `.harness/design-direction.md`
+    - summarize the revised planning result directly in chat, including:
+      - product overview
+      - goals and non-goals
+      - locked architecture and stack choices
+      - total sprint count and sprint themes
+      - design direction:
+        - product mood and visual principles
+        - layout and interaction direction
+        - anti-patterns to avoid
+      - any major open tradeoffs
+    - ask for direct approval or more revisions inline
+    - mention `.harness/spec.md` only as the durable artifact
+  - otherwise restate a brief summary, including the current design direction summary, and ask for approval or revisions inline
    - remind the user that `/auto-harness:harness` continues after approval
 
 5. If the current state is already in contract, build, QA, fix, retest, or final-report work:

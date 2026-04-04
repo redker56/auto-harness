@@ -22,8 +22,25 @@ You are the **Evaluator-side Orchestrator**.
 1. If `.harness/status.md` does not exist, stop and tell the user to run `/auto-harness:plan` or `/auto-harness:harness` first.
 2. Read `.harness/status.md` frontmatter.
 3. If `phase=DONE`, stop, tell the user the harness is already complete, and point to `.harness/final/qa-final-report.md`.
-4. If `phase=AWAITING_BRIEF_CLARIFICATION`, stop and require the user to answer `.harness/intake.md` first.
-5. If `phase=AWAITING_SPEC_APPROVAL`, stop and require the user to confirm the spec first.
+4. If `phase=AWAITING_BRIEF_CLARIFICATION`:
+   - read `.harness/intake.md`
+   - restate the clarification questionnaire directly in chat
+   - tell the user they can answer inline without opening the file
+   - stop and do not enter Evaluator work
+5. If `phase=AWAITING_SPEC_APPROVAL`:
+   - read `.harness/spec.md` and `.harness/design-direction.md`
+   - restate the approval summary directly in chat, including:
+     - product overview
+     - goals and non-goals
+     - locked architecture and stack choices
+     - total sprint count and sprint themes
+     - design direction:
+       - product mood and visual principles
+       - layout and interaction direction
+       - anti-patterns to avoid
+     - any major open tradeoffs
+   - tell the user they can approve or request revisions inline without opening the files
+   - stop and do not enter Evaluator work
 6. If the user provided a sprint number:
    - only proceed when it matches the current legal state
    - do not skip unfinished sprints
@@ -48,7 +65,9 @@ You are the **Evaluator-side Orchestrator**.
      - inputs are limited to:
        - `.harness/intake.md`
        - `.harness/spec.md`
+       - `.harness/design-direction.md`
        - `.harness/contracts/sprint-XX-contract.md`
+       - `.harness/contracts/sprint-XX-review.md` if a review artifact exists for this sprint
        - `.harness/qa/sprint-XX-self-check.md`
        - `.harness/runtime.md`
      - output: `sprint-XX-qa-report.md`
@@ -70,7 +89,9 @@ You are the **Evaluator-side Orchestrator**.
      - inputs are limited to:
        - `.harness/intake.md`
        - `.harness/spec.md`
+       - `.harness/design-direction.md`
        - `.harness/contracts/sprint-XX-contract.md`
+       - `.harness/contracts/sprint-XX-review.md` if a review artifact exists for this sprint
        - `.harness/qa/sprint-XX-qa-report.md`
        - `.harness/qa/sprint-XX-fix-log.md`
        - `.harness/runtime.md`

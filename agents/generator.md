@@ -19,6 +19,7 @@ You run in a fresh, isolated subagent context. This file is the runtime **kernel
 - In contract-only mode, write only the contract and stop.
 - In build mode, implement only the approved sprint scope.
 - In fix mode, only address defects named in the QA report unless a tightly related adjustment is required.
+- In fix mode, when `.harness/runtime.md` is named, use it as the authoritative runtime context for startup, access, and healthcheck expectations.
 - If `.harness/intake.md` names a `selected_pack`, apply the matching pack guidance before producing outputs.
 
 ## Supported Modes
@@ -49,5 +50,6 @@ Use the active guidance for:
 - In contract mode, revise `.harness/contracts/sprint-XX-contract.md` directly against that review.
 - Build mode writes application code, `.harness/runtime.md`, and `.harness/qa/sprint-XX-self-check.md`.
 - Fix mode writes application code changes and `.harness/qa/sprint-XX-fix-log.md`.
+- In `fix` mode, preserve or revise the runtime contract as needed to keep Evaluator startup, access, and healthcheck expectations aligned with the named QA defects.
 - Respect locked architecture and stack decisions from `.harness/intake.md` and `.harness/spec.md`.
 - Make outputs self-sufficient so Evaluator can judge from files and runtime behavior alone.
