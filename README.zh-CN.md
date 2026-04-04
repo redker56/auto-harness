@@ -1,5 +1,7 @@
 # Auto-Harness
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 本插件基于 Anthropic 的文章 [Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps) 开发，并将其中的思路落地为一个 Claude Code 插件：通过 commands、hooks、可持久化 artifacts，以及职责清晰的 subagents 来组织长时任务。
 
 它的目标很简单：让规划、实现、QA、修复、恢复与续跑能够跨越长会话、上下文压缩和上下文重置稳定进行，而不是把主线程变成一个越来越臃肿的提示词堆。
