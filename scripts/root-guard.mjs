@@ -195,6 +195,10 @@ function isRepoHarnessFile(relativePath) {
   return relativePath.startsWith(".harness/");
 }
 
+function allowedMainThreadPaths() {
+  return new Set([".harness/status.md", ".harness/checkpoints/latest.md"]);
+}
+
 const mode = process.argv[2];
 const fixedAgentName = process.argv[3];
 const payload = await readJsonStdin();
@@ -226,7 +230,12 @@ if (!targetFilePath || !isWithinProject(projectRoot, targetFilePath)) {
 
 const relativePath = relativeProjectPath(projectRoot, targetFilePath);
 if (!activeAgent) {
-  deny(`Auto-Harness blocked repo write to ${relativePath}: no active Auto-Harness subagent is registered for this session.`);
+  if (allowedMainThreadPaths().has(relativePath)) {
+    allow();
+  }
+  deny(
+    `Auto-Harness blocked repo write to ${relativePath}: the main thread may only edit .harness/status.md or .harness/checkpoints/latest.md.`,
+  );
 }
 
 const status = readStatusDocument(projectRoot);

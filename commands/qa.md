@@ -1,7 +1,7 @@
 ---
 description: "Advance Evaluator-side actions only. Auto-selects review, QA, retest, or final report from status.md. /auto-harness:qa [sprint]"
 argument-hint: "[optional two-digit sprint number, e.g. 01]"
-allowed-tools: [Read, Glob, Grep, Bash, Agent]
+allowed-tools: [Read, Write, Edit, MultiEdit, Glob, Grep, Bash, Agent]
 ---
 
 # Auto-Harness QA Orchestrator
@@ -14,14 +14,14 @@ You are the **Evaluator-side Orchestrator**.
 - Do not modify application source code.
 - Do not call `Generator`.
 - Only dispatch the correct **fresh action-specific Evaluator** subagent.
-- All state transitions must go through `harness-state set ...`.
+- The main thread may edit only `.harness/status.md` and `.harness/checkpoints/latest.md`.
 
-## Helper Scripts
+## State And Validation
 
-- read state: `harness-state get`
-- state summary: `harness-state summary`
-- update state: `harness-state set key=value ...`
-- validate review output: `harness-check-action evaluator_review`
+- read `.harness/status.md` directly
+- edit `.harness/status.md` directly when advancing state
+- edit `.harness/checkpoints/latest.md` directly only when you need to refresh the operator-facing checkpoint
+- validate contract-review output with `node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs" evaluator_review`
 
 ## Execution Logic
 
@@ -64,16 +64,16 @@ You are the **Evaluator-side Orchestrator**.
        - current sprint
        - the current legal action is `evaluator_review`
      - output: `sprint-XX-review.md`
-     - run `harness-check-action evaluator_review` immediately after the subagent returns
+     - run `node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs" evaluator_review` immediately after the subagent returns
      - if the check fails, re-dispatch the same Evaluator action with the repair reason and do not advance state
      - read the result:
-       - `REVISE` -> use `harness-state set` so status becomes:
+       - `REVISE` -> edit `.harness/status.md` so status becomes:
          - `phase=CONTRACTING`
          - `pending_action=generator_contract`
          - `last_agent=evaluator`
          - `approval_required=false`
          - keep the current review artifact so the next Generator run can revise the contract against it
-       - `APPROVED` -> use `harness-state set` so status becomes:
+       - `APPROVED` -> edit `.harness/status.md` so status becomes:
          - `phase=BUILDING`
          - `pending_action=generator_build`
          - `last_agent=evaluator`
@@ -98,18 +98,18 @@ You are the **Evaluator-side Orchestrator**.
        - repeat the reviewer step until it returns `Decision: APPROVED`
       - after reviewer approval, read `.harness/qa/sprint-XX-qa-report.md` directly and inspect its `Result: PASS|FAIL` line
       - then use that explicit QA result:
-        - `FAIL` -> use `harness-state set` so status becomes:
+        - `FAIL` -> edit `.harness/status.md` so status becomes:
           - `phase=FIXING`
           - `pending_action=generator_fix`
           - `last_agent=evaluator`
           - `approval_required=false`
-        - `PASS` and another sprint remains -> use `harness-state set` so status becomes:
+        - `PASS` and another sprint remains -> edit `.harness/status.md` so status becomes:
           - `phase=CONTRACTING`
           - `current_sprint=<next sprint>`
           - `pending_action=generator_contract`
           - `last_agent=evaluator`
           - `approval_required=false`
-        - `PASS` and this was the last sprint -> use `harness-state set` so status becomes:
+        - `PASS` and this was the last sprint -> edit `.harness/status.md` so status becomes:
           - `phase=QA`
           - `pending_action=evaluator_final`
           - `last_agent=evaluator`
@@ -134,18 +134,18 @@ You are the **Evaluator-side Orchestrator**.
        - repeat the reviewer step until it returns `Decision: APPROVED`
       - after reviewer approval, read `.harness/qa/sprint-XX-retest.md` directly and inspect its `Result: PASS|FAIL` line
       - then use that explicit retest result:
-        - `FAIL` -> use `harness-state set` so status becomes:
+        - `FAIL` -> edit `.harness/status.md` so status becomes:
           - `phase=FIXING`
           - `pending_action=generator_fix`
           - `last_agent=evaluator`
           - `approval_required=false`
-        - `PASS` and another sprint remains -> use `harness-state set` so status becomes:
+        - `PASS` and another sprint remains -> edit `.harness/status.md` so status becomes:
           - `phase=CONTRACTING`
           - `current_sprint=<next sprint>`
           - `pending_action=generator_contract`
           - `last_agent=evaluator`
           - `approval_required=false`
-        - `PASS` and this was the last sprint -> use `harness-state set` so status becomes:
+        - `PASS` and this was the last sprint -> edit `.harness/status.md` so status becomes:
           - `phase=QA`
           - `pending_action=evaluator_final`
           - `last_agent=evaluator`
@@ -166,7 +166,7 @@ You are the **Evaluator-side Orchestrator**.
        - dispatch a fresh `auto-harness:evaluator-write-final-agent` subagent to revise the existing final report only
        - pass the reviewer checklist verbatim
        - repeat the reviewer step until it returns `Decision: APPROVED`
-      - after reviewer approval, use `harness-state set` so status becomes:
+      - after reviewer approval, edit `.harness/status.md` so status becomes:
         - `phase=DONE`
         - `pending_action=none`
         - `last_agent=evaluator`

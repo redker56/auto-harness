@@ -10,7 +10,7 @@ Auto-Harness is a Claude Code plugin for long-running application work. It turns
 - `agents/` are action-specific subagents, one legal harness action per agent
 - `skills/` hold action-specific behavior such as `planner-clarify` and `evaluator-write-qa`
 - `hooks/` enforce runtime boundaries and resume behavior at the plugin root
-- `scripts/` provide state, runtime, post-run action checks, root guards, and checkpoint helpers
+- `scripts/` provide runtime helpers, post-run action checks, root guards, and checkpoint support
 
 ## What It Gives You
 
@@ -30,7 +30,7 @@ The main thread does these things:
 - reads project state from `.harness/`
 - decides which phase comes next
 - dispatches fresh subagents
-- advances `.harness/status.md` through helper scripts
+- edits `.harness/status.md` directly and refreshes `.harness/checkpoints/latest.md` when needed
 - talks to the user directly when clarification or approval is needed
 
 The main thread does not draft the spec, write app code, or make QA judgments.
@@ -188,11 +188,11 @@ Evaluator-side mode. It auto-selects the current legal Evaluator action from `.h
 | `.harness/qa/sprint-XX-fix-log.md` | Generator | Fixes applied after a failed QA run |
 | `.harness/qa/sprint-XX-retest.md` | Evaluator | Retest result after fixes |
 | `.harness/final/qa-final-report.md` | Evaluator | End-of-run final assessment |
-| `.harness/checkpoints/latest.md` | Hook/script | Resume snapshot used during session restart or compaction |
+| `.harness/checkpoints/latest.md` | Orchestrator + Hook | Resume snapshot used during session restart or compaction |
 
 ## Status Model
 
-`.harness/status.md` frontmatter is the state source of truth. The helper scripts and hooks expect fields like:
+`.harness/status.md` frontmatter is the state source of truth. The hooks and command prompts expect fields like:
 
 ```yaml
 phase: CONTRACTING
@@ -259,13 +259,7 @@ auto-harness/
 |   |-- harness-hook.mjs
 |   |-- harness-lib.mjs
 |   |-- harness-runtime.mjs
-|   |-- root-guard.mjs
-|   `-- harness-state.mjs
-|-- bin/
-|   |-- harness-check-action
-|   |-- harness-check-action.cmd
-|   |-- harness-state
-|   `-- harness-state.cmd
+|   `-- root-guard.mjs
 |-- skills/
 |   |-- planner-clarify/
 |   |-- planner-spec-draft/
@@ -310,7 +304,7 @@ The plugin uses plugin-root hooks:
 
 Completion checks use:
 
-- Planner, Generator, and contract-review outputs are validated explicitly by `harness-check-action`
+- Planner, Generator, and contract-review outputs are validated explicitly by `node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs"`
 - QA, retest, and final reports are audited by explicit reviewer agents
 - The Orchestrator advances state after those checks succeed
 
@@ -330,14 +324,10 @@ In practice:
 
 ## Helper Scripts
 
-### State Helper
+### State Files
 
-```text
-node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-state.mjs" get
-node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-state.mjs" summary
-node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-state.mjs" set key=value ...
-node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-state.mjs" checkpoint auto
-```
+- The main thread edits `.harness/status.md` directly when advancing state.
+- The main thread may edit `.harness/checkpoints/latest.md` directly when it needs to refresh the operator-facing checkpoint.
 
 ### Action Check Helper
 
@@ -356,5 +346,6 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs" evaluator_review
 node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-runtime.mjs" get
 node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-runtime.mjs" healthcheck
 ```
+
 
 

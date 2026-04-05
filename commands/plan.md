@@ -1,7 +1,7 @@
 ---
 description: "Run the Planner side only. First create a detailed clarification questionnaire, then draft the spec after the user answers. /auto-harness:plan <brief or clarification answers>"
 argument-hint: "<product brief or clarification answers>"
-allowed-tools: [Read, Glob, Grep, Bash, Agent]
+allowed-tools: [Read, Write, Edit, MultiEdit, Glob, Grep, Bash, Agent]
 ---
 
 # Auto-Harness Planner Orchestrator
@@ -13,16 +13,16 @@ You are still the main-thread **Orchestrator**, not the Planner itself.
 - Do not write the spec content yourself.
 - Do not write application source code.
 - Always use the correct **fresh action-specific Planner** subagent.
-- All state transitions must go through `harness-state set ...`.
+- The main thread may edit only `.harness/status.md` and `.harness/checkpoints/latest.md`.
 - Do not skip the clarification stage if the brief is underspecified.
 - Keep the user interaction in chat. Do not push them to open `.harness/*.md` just to continue planning.
 
-## Helper Scripts
+## State And Validation
 
-- read state: `harness-state get`
-- state summary: `harness-state summary`
-- update state: `harness-state set key=value ...`
-- validate planner outputs: `harness-check-action planner_clarify` or `harness-check-action planner_spec_draft`
+- read `.harness/status.md` directly
+- edit `.harness/status.md` directly when advancing state
+- edit `.harness/checkpoints/latest.md` directly only when you need to refresh the operator-facing checkpoint
+- validate planner outputs with `node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs" planner_clarify` or `node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs" planner_spec_draft`
 
 ## Flow
 
@@ -36,9 +36,9 @@ You are still the main-thread **Orchestrator**, not the Planner itself.
    - required outputs:
      - `.harness/intake.md`
      - `.harness/status.md`
-   - run `harness-check-action planner_clarify` immediately after the subagent returns
+   - run `node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs" planner_clarify` immediately after the subagent returns
    - if the check fails, re-dispatch the same Planner action with the reported repair reason and do not advance state
-   - then use `harness-state set` so `.harness/status.md` becomes:
+   - then edit `.harness/status.md` so it becomes:
      - `phase=AWAITING_BRIEF_CLARIFICATION`
      - `current_sprint=0`
      - `pending_action=brief_clarification`
@@ -71,9 +71,9 @@ You are still the main-thread **Orchestrator**, not the Planner itself.
        - `.harness/spec.md`
        - `.harness/design-direction.md`
        - `.harness/status.md`
-     - run `harness-check-action planner_spec_draft` immediately after the subagent returns
+     - run `node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs" planner_spec_draft` immediately after the subagent returns
      - if the check fails, re-dispatch the same Planner action with the reported repair reason and do not advance state
-     - then use `harness-state set` so `.harness/status.md` becomes:
+     - then edit `.harness/status.md` so it becomes:
        - `phase=AWAITING_SPEC_APPROVAL`
        - `current_sprint=0`
        - `pending_action=spec_approval`
@@ -111,9 +111,9 @@ You are still the main-thread **Orchestrator**, not the Planner itself.
        - `.harness/spec.md`
        - `.harness/design-direction.md`
        - `.harness/status.md`
-     - run `harness-check-action planner_spec_draft` immediately after the subagent returns
+     - run `node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs" planner_spec_draft` immediately after the subagent returns
      - if the check fails, re-dispatch the same Planner action with the reported repair reason and do not advance state
-     - then use `harness-state set` so `.harness/status.md` becomes:
+     - then edit `.harness/status.md` so it becomes:
        - `phase=AWAITING_SPEC_APPROVAL`
        - `current_sprint=0`
        - `pending_action=spec_approval`

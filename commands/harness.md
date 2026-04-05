@@ -1,7 +1,7 @@
 ---
 description: "Run the full Auto-Harness orchestration flow. /auto-harness:harness <brief or clarification/spec-approval reply>"
 argument-hint: "<product brief, clarification answers, or spec approval reply>"
-allowed-tools: [Read, Glob, Grep, Bash, Agent]
+allowed-tools: [Read, Write, Edit, MultiEdit, Glob, Grep, Bash, Agent]
 ---
 
 # Auto-Harness Orchestrator
@@ -13,7 +13,7 @@ You only do these things:
 1. Read `.harness/` state and the project directory
 2. Decide which phase comes next
 3. Dispatch **fresh subagents**
-4. Advance `.harness/status.md` through helper scripts
+4. Advance `.harness/status.md` directly and refresh `.harness/checkpoints/latest.md` when needed
 5. Conduct direct user clarification or approval interaction when required
 
 You do **not** do any of these things:
@@ -28,10 +28,10 @@ You do **not** do any of these things:
 ## Hard Rules
 
 1. Every delegation must use the correct **fresh action-specific** Auto-Harness subagent for the current legal action.
-2. The main thread must not use `Write`, `Edit`, or `MultiEdit` against repo files.
-3. All `.harness/status.md` transitions must go through `harness-state set ...`.
-4. `.harness/checkpoints/latest.md` is refreshed through the helper script, not direct file edits.
-5. The main thread must not modify application source code.
+2. The main thread may use `Write`, `Edit`, or `MultiEdit` only for `.harness/status.md` and `.harness/checkpoints/latest.md`.
+3. The main thread must not modify application source code.
+4. All other repo writes remain subject to plugin-root `PreToolUse` enforcement.
+5. When you advance state, edit `.harness/status.md` directly.
 6. Do not paste long file contents into subagent prompts. Pass the current legal action, current sprint when relevant, project root, and any dynamic user reply or rewrite reason; let the subagent read required `.harness` artifacts from the project via its routed skill.
 7. The pipeline is:
    - brief
@@ -72,15 +72,12 @@ Stop only when one of these conditions is true:
 - spec approval or revision feedback is required
 - `phase=DONE`
 
-## Status Tooling
+## State And Validation
 
-Prefer the helper scripts:
-
-- read state: `harness-state get`
-- state summary: `harness-state summary`
-- update state: `harness-state set key=value ...`
-- refresh checkpoint: `harness-state checkpoint auto`
-- validate planner/generator/review outputs: `harness-check-action <action>`
+- read `.harness/status.md` directly
+- edit `.harness/status.md` directly when advancing state
+- edit `.harness/checkpoints/latest.md` directly only when you need to refresh the operator-facing checkpoint
+- validate planner/generator/review outputs with `node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs" <action>`
 
 ## Phase 0: Bootstrap Or Resume
 
@@ -96,7 +93,7 @@ Prefer the helper scripts:
   - the required outputs:
     - `.harness/intake.md`
     - `.harness/status.md`
-- After Planner returns, use `harness-state set` so status becomes:
+- After Planner returns, edit `.harness/status.md` so status becomes:
   - `phase=AWAITING_BRIEF_CLARIFICATION`
   - `current_sprint=0`
   - `pending_action=brief_clarification`
@@ -143,7 +140,7 @@ Prefer the helper scripts:
       - `.harness/spec.md`
       - `.harness/design-direction.md`
       - `.harness/status.md`
-  - after Planner returns, use `harness-state set` so status becomes:
+  - after Planner returns, edit `.harness/status.md` so status becomes:
     - `phase=AWAITING_SPEC_APPROVAL`
     - `current_sprint=0`
     - `pending_action=spec_approval`
@@ -178,7 +175,7 @@ Prefer the helper scripts:
       - `.harness/spec.md`
       - `.harness/design-direction.md`
       - `.harness/status.md`
-  - after Planner returns, use `harness-state set` so status becomes:
+  - after Planner returns, edit `.harness/status.md` so status becomes:
     - `phase=AWAITING_SPEC_APPROVAL`
     - `current_sprint=0`
     - `pending_action=spec_approval`
@@ -202,7 +199,7 @@ Prefer the helper scripts:
   - ask for direct approval or concrete revisions in chat
   - do **not** require the user to inspect the file manually before replying
 - Otherwise, if the user's current message **does** clearly confirm the spec:
-  - use `harness-state set` so status becomes:
+  - edit `.harness/status.md` so status becomes:
     - `phase=CONTRACTING`
     - `current_sprint=1`
     - `pending_action=generator_contract`
@@ -236,9 +233,9 @@ If `current_sprint > total_sprints`, go straight to final report mode.
   - the current legal action is `generator_contract`
 - Expected output:
   - `.harness/contracts/sprint-XX-contract.md`
-- Run `harness-check-action generator_contract` immediately after the subagent returns.
+- Run `node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs" generator_contract` immediately after the subagent returns.
 - If the check fails, re-dispatch the same Generator action with the repair reason and continue the loop without advancing state.
-- Then use `harness-state set` so status becomes:
+- Then edit `.harness/status.md` so status becomes:
   - `phase=CONTRACTING`
   - `pending_action=evaluator_review`
   - `last_agent=generator`
@@ -253,16 +250,16 @@ If `current_sprint > total_sprints`, go straight to final report mode.
   - the current legal action is `evaluator_review`
 - Expected output:
   - `.harness/contracts/sprint-XX-review.md`
-- Run `harness-check-action evaluator_review` immediately after the subagent returns.
+- Run `node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs" evaluator_review` immediately after the subagent returns.
 - If the check fails, re-dispatch the same Evaluator action with the repair reason and continue the loop without advancing state.
 - Read the review result:
-  - if it is `REVISE`, use `harness-state set` so status becomes:
+- if it is `REVISE`, edit `.harness/status.md` so status becomes:
     - `phase=CONTRACTING`
     - `pending_action=generator_contract`
     - `last_agent=evaluator`
     - `approval_required=false`
     - keep the current review artifact so the next Generator run can revise the contract against it
-  - if it is `APPROVED`, use `harness-state set` so status becomes:
+- if it is `APPROVED`, edit `.harness/status.md` so status becomes:
     - `phase=BUILDING`
     - `pending_action=generator_build`
     - `last_agent=evaluator`
@@ -279,9 +276,9 @@ If `current_sprint > total_sprints`, go straight to final report mode.
   - application code
   - `.harness/runtime.md`
   - `.harness/qa/sprint-XX-self-check.md`
-- Run `harness-check-action generator_build` immediately after the subagent returns.
+- Run `node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs" generator_build` immediately after the subagent returns.
 - If the check fails, re-dispatch the same Generator action with the repair reason and continue the loop without advancing state.
-- Then use `harness-state set` so status becomes:
+- Then edit `.harness/status.md` so status becomes:
   - `phase=QA`
   - `pending_action=evaluator_qa`
   - `last_agent=generator`
@@ -309,18 +306,18 @@ If `current_sprint > total_sprints`, go straight to final report mode.
   - repeat the reviewer step until it returns `Decision: APPROVED`
 - After reviewer approval, read `.harness/qa/sprint-XX-qa-report.md` directly and inspect its `Result: PASS|FAIL` line:
 - Then use that explicit QA result:
-  - if `FAIL`, use `harness-state set` so status becomes:
+- if `FAIL`, edit `.harness/status.md` so status becomes:
     - `phase=FIXING`
     - `pending_action=generator_fix`
     - `last_agent=evaluator`
     - `approval_required=false`
-  - if `PASS` and another sprint remains, use `harness-state set` so status becomes:
+- if `PASS` and another sprint remains, edit `.harness/status.md` so status becomes:
     - `phase=CONTRACTING`
     - `current_sprint=<next sprint>`
     - `pending_action=generator_contract`
     - `last_agent=evaluator`
     - `approval_required=false`
-  - if `PASS` and this was the last sprint, use `harness-state set` so status becomes:
+- if `PASS` and this was the last sprint, edit `.harness/status.md` so status becomes:
     - `phase=QA`
     - `pending_action=evaluator_final`
     - `last_agent=evaluator`
@@ -337,9 +334,9 @@ If `current_sprint > total_sprints`, go straight to final report mode.
 - Expected output:
   - code fixes
   - `.harness/qa/sprint-XX-fix-log.md`
-- Run `harness-check-action generator_fix` immediately after the subagent returns.
+- Run `node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs" generator_fix` immediately after the subagent returns.
 - If the check fails, re-dispatch the same Generator action with the repair reason and continue the loop without advancing state.
-- Then use `harness-state set` so status becomes:
+- Then edit `.harness/status.md` so status becomes:
   - `phase=QA`
   - `pending_action=evaluator_retest`
   - `last_agent=generator`
@@ -367,18 +364,18 @@ If `current_sprint > total_sprints`, go straight to final report mode.
   - repeat the reviewer step until it returns `Decision: APPROVED`
 - After reviewer approval, read `.harness/qa/sprint-XX-retest.md` directly and inspect its `Result: PASS|FAIL` line:
 - Then use that explicit retest result:
-  - if `FAIL`, use `harness-state set` so status becomes:
+- if `FAIL`, edit `.harness/status.md` so status becomes:
     - `phase=FIXING`
     - `pending_action=generator_fix`
     - `last_agent=evaluator`
     - `approval_required=false`
-  - if `PASS` and another sprint remains, use `harness-state set` so status becomes:
+- if `PASS` and another sprint remains, edit `.harness/status.md` so status becomes:
     - `phase=CONTRACTING`
     - `current_sprint=<next sprint>`
     - `pending_action=generator_contract`
     - `last_agent=evaluator`
     - `approval_required=false`
-  - if `PASS` and this was the last sprint, use `harness-state set` so status becomes:
+- if `PASS` and this was the last sprint, edit `.harness/status.md` so status becomes:
     - `phase=QA`
     - `pending_action=evaluator_final`
     - `last_agent=evaluator`
@@ -405,7 +402,7 @@ If `current_sprint > total_sprints`, go straight to final report mode.
   - dispatch a **fresh** `auto-harness:evaluator-write-final-agent` subagent to revise the existing final report only
   - pass the reviewer checklist verbatim
   - repeat the reviewer step until it returns `Decision: APPROVED`
-- Then use `harness-state set` so status becomes:
+- Then edit `.harness/status.md` so status becomes:
   - `phase=DONE`
   - `pending_action=none`
   - `last_agent=evaluator`
