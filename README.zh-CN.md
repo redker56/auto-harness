@@ -217,6 +217,7 @@ selected_pack: default
 典型 pending_action：
 
 - `brief_clarification`
+- `spec_draft`
 - `spec_approval`
 - `generator_contract`
 - `evaluator_review`

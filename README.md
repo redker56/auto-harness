@@ -217,6 +217,7 @@ Typical phases:
 Typical pending actions:
 
 - `brief_clarification`
+- `spec_draft`
 - `spec_approval`
 - `generator_contract`
 - `evaluator_review`
