@@ -1,6 +1,6 @@
 {
   "name": "auto-harness",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Orchestrated long-running coding harness for Claude Code with commands, action-specific subagents, internal action skills, hooks, and durable .harness artifacts. The main thread coordinates fresh action-specific Planner, Generator, and Evaluator-role subagents through contract review, sprint QA, fix loops, and Playwright-based browser verification.",
   "author": {
     "name": "redker56"

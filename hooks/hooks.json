@@ -1,5 +1,17 @@
 {
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" pretool",
+            "async": false
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "matcher": "startup|resume|compact",
@@ -19,6 +31,250 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/harness-hook.mjs\" pre-compact",
+            "async": false
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": "auto-harness:planner-clarify-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:planner-clarify-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:planner-spec-draft-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:planner-spec-draft-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:generator-draft-contract-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:generator-draft-contract-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:generator-build-sprint-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:generator-build-sprint-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:generator-apply-fixes-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:generator-apply-fixes-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:evaluator-review-contract-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:evaluator-review-contract-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:evaluator-write-qa-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:evaluator-write-qa-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:evaluator-write-retest-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:evaluator-write-retest-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:evaluator-write-final-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:evaluator-write-final-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:qa-report-reviewer-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:qa-report-reviewer-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:retest-report-reviewer-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:retest-report-reviewer-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:final-report-reviewer-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:final-report-reviewer-agent",
+            "async": false
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "auto-harness:planner-clarify-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:planner-clarify-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:planner-spec-draft-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:planner-spec-draft-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:generator-draft-contract-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:generator-draft-contract-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:generator-build-sprint-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:generator-build-sprint-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:generator-apply-fixes-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:generator-apply-fixes-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:evaluator-review-contract-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:evaluator-review-contract-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:evaluator-write-qa-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:evaluator-write-qa-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:evaluator-write-retest-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:evaluator-write-retest-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:evaluator-write-final-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:evaluator-write-final-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:qa-report-reviewer-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:qa-report-reviewer-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:retest-report-reviewer-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:retest-report-reviewer-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:final-report-reviewer-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:final-report-reviewer-agent",
             "async": false
           }
         ]

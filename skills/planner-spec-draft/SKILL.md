@@ -2,27 +2,6 @@
 name: planner-spec-draft
 description: Internal Auto-Harness planning skill for spec and design-direction drafting. Use only inside the Planner subagent when it is updating intake.md and producing spec.md plus design-direction.md.
 user-invocable: false
-hooks:
-  PreToolUse:
-    - matcher: "Write"
-      hooks:
-        - type: command
-          if: "Write(*)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool planner-spec-draft
-    - matcher: "Edit"
-      hooks:
-        - type: command
-          if: "Edit(*)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool planner-spec-draft
-    - matcher: "MultiEdit"
-      hooks:
-        - type: command
-          if: "MultiEdit(*)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool planner-spec-draft
-  Stop:
-    - hooks:
-        - type: command
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" stop planner-spec-draft
 ---
 
 # Planner Spec Draft

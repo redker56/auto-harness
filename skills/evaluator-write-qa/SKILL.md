@@ -2,58 +2,6 @@
 name: evaluator-write-qa
 description: Internal Auto-Harness evaluator skill for sprint QA and QA report writing. Use only inside the Evaluator subagent during qa mode.
 user-invocable: false
-hooks:
-  PreToolUse:
-    - matcher: "Write"
-      hooks:
-        - type: command
-          if: "Write(*)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool evaluator-write-qa
-    - matcher: "Edit"
-      hooks:
-        - type: command
-          if: "Edit(*)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool evaluator-write-qa
-    - matcher: "MultiEdit"
-      hooks:
-        - type: command
-          if: "MultiEdit(*)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool evaluator-write-qa
-  PostToolUse:
-    - matcher: "Write"
-      hooks:
-        - type: command
-          if: "Write(/.harness/qa/sprint-*-qa-report.md)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" posttool evaluator-write-qa
-    - matcher: "Edit"
-      hooks:
-        - type: command
-          if: "Edit(/.harness/qa/sprint-*-qa-report.md)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" posttool evaluator-write-qa
-    - matcher: "MultiEdit"
-      hooks:
-        - type: command
-          if: "MultiEdit(/.harness/qa/sprint-*-qa-report.md)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" posttool evaluator-write-qa
-  Stop:
-    - hooks:
-        - type: command
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" stop evaluator-write-qa
-        - type: agent
-          prompt: >-
-            Audit the current sprint QA report for rubric-writing compliance before
-            allowing the current Evaluator subagent to finish. Use the
-            `evaluator-write-qa` skill as the
-            governing contract for this audit. Read the QA report, read this skill, then
-            read the rubric files and QA report template/schema that this skill points to.
-            Verify that the report's sections, scorecard rows, hard-fail treatment,
-            severity vocabulary, PASS/FAIL derivation, and written conclusions follow the
-            rubric files and the template/schema exactly. Do not do a fresh independent QA
-            judgment; only check whether the report was written according to the
-            evaluator-write-qa skill and the rubric/schema files it points to. If the
-            report violates that contract, respond with {"ok": false, "reason": "short
-            explanation naming the rubric or schema mismatch"}. Otherwise respond with
-            {"ok": true}.
 ---
 
 # Evaluator Write QA

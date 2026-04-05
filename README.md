@@ -6,11 +6,11 @@ This plugin is based on Anthropic's article, [Harness design for long-running ap
 
 Auto-Harness is a Claude Code plugin for long-running application work. It turns planning, implementation, QA, fix loops, and resume/recovery into a file-backed workflow under `.harness/` while keeping the main thread role-pure.
 
-- `commands/` stay as the control plane
+- `commands/` serve as the control plane
 - `agents/` are action-specific subagents, one legal harness action per agent
 - `skills/` hold action-specific behavior such as `planner-clarify` and `evaluator-write-qa`
-- `hooks/` and skill-scoped hooks enforce boundaries, report schemas, and resume behavior
-- `scripts/` provide state, runtime, report validation, and checkpoint helpers
+- `hooks/` enforce runtime boundaries and resume behavior at the plugin root
+- `scripts/` provide state, runtime, post-run action checks, root guards, and checkpoint helpers
 
 ## What It Gives You
 
@@ -25,19 +25,19 @@ Auto-Harness is a Claude Code plugin for long-running application work. It turns
 
 ### Main Thread: Orchestrator
 
-The main thread only does these things:
+The main thread does these things:
 
 - reads project state from `.harness/`
 - decides which phase comes next
 - dispatches fresh subagents
-- updates `.harness/status.md`
+- advances `.harness/status.md` through helper scripts
 - talks to the user directly when clarification or approval is needed
 
 The main thread does not draft the spec, write app code, or make QA judgments.
 
 ### Action-Specific Subagents
 
-Auto-Harness now dispatches one focused subagent per legal harness action:
+Auto-Harness dispatches one focused subagent per legal harness action:
 
 - `planner-clarify-agent`
 - `planner-spec-draft-agent`
@@ -48,8 +48,11 @@ Auto-Harness now dispatches one focused subagent per legal harness action:
 - `evaluator-write-qa-agent`
 - `evaluator-write-retest-agent`
 - `evaluator-write-final-agent`
+- `qa-report-reviewer-agent`
+- `retest-report-reviewer-agent`
+- `final-report-reviewer-agent`
 
-Each action-specific agent preloads exactly one internal skill and reads the current project `.harness/` state for itself. Action-specific skills are the primary behavior layer; templates, rubrics, packs, hooks, and local protocol references support them.
+Writer agents preload exactly one internal skill and read the current project `.harness/` state for themselves. Reviewer agents use prompt-based review and audit QA/retest/final reports against embedded rubric and template requirements. Internal skills carry behavior guidance. Runtime enforcement lives at the plugin root.
 
 ## End-To-End Flow
 
@@ -63,12 +66,13 @@ User brief
   -> generator-draft-contract-agent
   -> evaluator-review-contract-agent
   -> generator-build-sprint-agent
-  -> evaluator-write-qa-agent
-  -> if FAIL: generator-apply-fixes-agent -> evaluator-write-retest-agent
+  -> evaluator-write-qa-agent -> qa-report-reviewer-agent
+  -> if FAIL: generator-apply-fixes-agent -> evaluator-write-retest-agent -> retest-report-reviewer-agent
+  -> evaluator-write-final-agent -> final-report-reviewer-agent
   -> next sprint or final report
 ```
 
-The user interaction happens in chat. `.harness/*.md` is the durable log, not a document the user is forced to manually inspect just to continue.
+User interaction happens in chat. `.harness/*.md` is the durable log.
 
 ## Quick Start
 
@@ -104,9 +108,9 @@ The user interaction happens in chat. `.harness/*.md` is the durable log, not a 
 ### Minimal Operator Mental Model
 
 - use `/auto-harness:harness` for the normal end-to-end loop
-- use `/auto-harness:plan` when you only want intake and spec work
-- use `/auto-harness:build` when you want to advance Generator-side work only
-- use `/auto-harness:qa` when you want to advance Evaluator-side work only
+- use `/auto-harness:plan` when you want intake and spec work
+- use `/auto-harness:build` when you want to advance Generator-side work
+- use `/auto-harness:qa` when you want to advance Evaluator-side work
 
 ## Commands
 
@@ -121,7 +125,7 @@ The default command. It can handle:
 
 ### `/auto-harness:plan <brief-or-clarification-answers>`
 
-Planning-only mode. It can:
+Planning mode. It can:
 
 - bootstrap `.harness/intake.md`
 - ask clarification questions
@@ -238,7 +242,10 @@ auto-harness/
 |   |-- evaluator-review-contract-agent.md
 |   |-- evaluator-write-qa-agent.md
 |   |-- evaluator-write-retest-agent.md
-|   `-- evaluator-write-final-agent.md
+|   |-- evaluator-write-final-agent.md
+|   |-- qa-report-reviewer-agent.md
+|   |-- retest-report-reviewer-agent.md
+|   `-- final-report-reviewer-agent.md
 |-- commands/
 |   |-- harness.md
 |   |-- plan.md
@@ -247,11 +254,17 @@ auto-harness/
 |-- hooks/
 |   `-- hooks.json
 |-- scripts/
+|   |-- action-check.mjs
 |   |-- harness-hook.mjs
 |   |-- harness-lib.mjs
-|   |-- harness-report.mjs
 |   |-- harness-runtime.mjs
+|   |-- root-guard.mjs
 |   `-- harness-state.mjs
+|-- bin/
+|   |-- harness-check-action
+|   |-- harness-check-action.cmd
+|   |-- harness-state
+|   `-- harness-state.cmd
 |-- skills/
 |   |-- planner-clarify/
 |   |-- planner-spec-draft/
@@ -270,38 +283,35 @@ auto-harness/
 
 ## Internal Skills
 
-Each subagent action is backed by an internal skill with its own supporting files and hooks.
+Each writer subagent action is backed by an internal skill with its own supporting files.
 
 Examples:
 
-- `planner-clarify`: clarification intake only
-- `generator-build-sprint`: approved sprint implementation only
-- `evaluator-write-qa`: QA execution plus QA report enforcement
+- `planner-clarify`: clarification intake
+- `generator-build-sprint`: approved sprint implementation
+- `evaluator-write-qa`: QA execution plus QA report drafting guidance
 
 These skills are internal:
 
 - not shown as user-facing workflow commands
 - not intended for direct operator use
 - preloaded by the matching subagent kernel
-- responsible for action-specific rules, templates, packs, and report gates
+- responsible for action-specific rules, templates, packs, and report-writing guidance
 
 ## Hooks And Resume Behavior
 
-The plugin uses two layers of hooks:
+The plugin uses plugin-root hooks:
 
-- plugin-level hooks in `hooks/hooks.json`
-- skill-scoped hooks in the internal skills
-
-Plugin-level hooks:
-
-- `SessionStart`: reads `.harness/status.md`, includes a checkpoint excerpt, and reminds the session to resume instead of restarting planning
+- `SessionStart`: reads `.harness/status.md`, includes a checkpoint excerpt, and resumes the active harness session from the recorded state
 - `PreCompact`: refreshes `.harness/checkpoints/latest.md` before compaction
+- `PreToolUse`: enforces all repo write boundaries from the plugin root using `.harness/status.md` as the legal-action source of truth
+- `SubagentStart` / `SubagentStop`: track active Auto-Harness subagents for observability and root-hook enforcement
 
-Skill-scoped hooks enforce action boundaries, for example:
+Completion checks use:
 
-- planner skills can only write planner-owned `.harness/` files
-- generator skills cannot touch `status.md`, review files, QA reports, retest reports, or the final report
-- evaluator report skills validate report structure and consistency before the subagent can finish
+- Planner, Generator, and contract-review outputs are validated explicitly by `harness-check-action`
+- QA, retest, and final reports are audited by explicit reviewer agents
+- The Orchestrator advances state after those checks succeed
 
 ## Playwright MCP
 
@@ -328,6 +338,17 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-state.mjs" set key=value ...
 node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-state.mjs" checkpoint auto
 ```
 
+### Action Check Helper
+
+```text
+node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs" planner_clarify
+node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs" planner_spec_draft
+node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs" generator_contract
+node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs" generator_build
+node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs" generator_fix
+node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs" evaluator_review
+```
+
 ### Runtime Helper
 
 ```text
@@ -335,12 +356,4 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-runtime.mjs" get
 node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-runtime.mjs" healthcheck
 ```
 
-### Report Helper
-
-```text
-node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" qa validate
-node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" qa result
-node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" retest validate
-node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" final validate
-```
 

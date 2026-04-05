@@ -2,27 +2,6 @@
 name: planner-clarify
 description: Internal Auto-Harness planning skill for clarification intake. Use only inside the Planner subagent when it is producing .harness/intake.md and .harness/status.md.
 user-invocable: false
-hooks:
-  PreToolUse:
-    - matcher: "Write"
-      hooks:
-        - type: command
-          if: "Write(*)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool planner-clarify
-    - matcher: "Edit"
-      hooks:
-        - type: command
-          if: "Edit(*)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool planner-clarify
-    - matcher: "MultiEdit"
-      hooks:
-        - type: command
-          if: "MultiEdit(*)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool planner-clarify
-  Stop:
-    - hooks:
-        - type: command
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" stop planner-clarify
 ---
 
 # Planner Clarify

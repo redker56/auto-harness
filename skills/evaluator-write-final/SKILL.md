@@ -2,57 +2,6 @@
 name: evaluator-write-final
 description: Internal Auto-Harness evaluator skill for final QA report aggregation. Use only inside the Evaluator subagent during final mode.
 user-invocable: false
-hooks:
-  PreToolUse:
-    - matcher: "Write"
-      hooks:
-        - type: command
-          if: "Write(*)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool evaluator-write-final
-    - matcher: "Edit"
-      hooks:
-        - type: command
-          if: "Edit(*)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool evaluator-write-final
-    - matcher: "MultiEdit"
-      hooks:
-        - type: command
-          if: "MultiEdit(*)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool evaluator-write-final
-  PostToolUse:
-    - matcher: "Write"
-      hooks:
-        - type: command
-          if: "Write(/.harness/final/qa-final-report.md)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" posttool evaluator-write-final
-    - matcher: "Edit"
-      hooks:
-        - type: command
-          if: "Edit(/.harness/final/qa-final-report.md)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" posttool evaluator-write-final
-    - matcher: "MultiEdit"
-      hooks:
-        - type: command
-          if: "MultiEdit(/.harness/final/qa-final-report.md)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" posttool evaluator-write-final
-  Stop:
-    - hooks:
-        - type: command
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" stop evaluator-write-final
-        - type: agent
-          prompt: >-
-            Audit the final QA report for rubric-writing compliance before allowing the
-            current Evaluator subagent to finish. Use the `evaluator-write-final` skill
-            as the governing
-            contract for this audit. Read the final report, read this skill, then read
-            the rubric files and final report template/schema that this skill points to.
-            Verify that the final recommendation, remaining-risk summary, severity
-            vocabulary, and written conclusions follow the rubric files and the
-            template/schema exactly. Do not do a fresh independent final judgment; only
-            check whether the report was written according to the evaluator-write-final
-            skill and the rubric/schema files it points to. If the report violates that
-            contract, respond with {"ok": false, "reason": "short explanation naming the
-            rubric or schema mismatch"}. Otherwise respond with {"ok": true}.
 ---
 
 # Evaluator Write Final

@@ -2,27 +2,6 @@
 name: generator-draft-contract
 description: Internal Auto-Harness generator skill for sprint contract drafting. Use only inside the Generator subagent when it is producing or revising the current sprint contract.
 user-invocable: false
-hooks:
-  PreToolUse:
-    - matcher: "Write"
-      hooks:
-        - type: command
-          if: "Write(/.harness/**)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool generator-draft-contract
-    - matcher: "Edit"
-      hooks:
-        - type: command
-          if: "Edit(/.harness/**)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool generator-draft-contract
-    - matcher: "MultiEdit"
-      hooks:
-        - type: command
-          if: "MultiEdit(/.harness/**)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool generator-draft-contract
-  Stop:
-    - hooks:
-        - type: command
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" stop generator-draft-contract
 ---
 
 # Generator Draft Contract

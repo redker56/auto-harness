@@ -2,58 +2,6 @@
 name: evaluator-write-retest
 description: Internal Auto-Harness evaluator skill for sprint retest and retest report writing. Use only inside the Evaluator subagent during retest mode.
 user-invocable: false
-hooks:
-  PreToolUse:
-    - matcher: "Write"
-      hooks:
-        - type: command
-          if: "Write(*)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool evaluator-write-retest
-    - matcher: "Edit"
-      hooks:
-        - type: command
-          if: "Edit(*)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool evaluator-write-retest
-    - matcher: "MultiEdit"
-      hooks:
-        - type: command
-          if: "MultiEdit(*)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool evaluator-write-retest
-  PostToolUse:
-    - matcher: "Write"
-      hooks:
-        - type: command
-          if: "Write(/.harness/qa/sprint-*-retest.md)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" posttool evaluator-write-retest
-    - matcher: "Edit"
-      hooks:
-        - type: command
-          if: "Edit(/.harness/qa/sprint-*-retest.md)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" posttool evaluator-write-retest
-    - matcher: "MultiEdit"
-      hooks:
-        - type: command
-          if: "MultiEdit(/.harness/qa/sprint-*-retest.md)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" posttool evaluator-write-retest
-  Stop:
-    - hooks:
-        - type: command
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" stop evaluator-write-retest
-        - type: agent
-          prompt: >-
-            Audit the current sprint retest report for rubric-writing compliance before
-            allowing the current Evaluator subagent to finish. Use the
-            `evaluator-write-retest` skill as the
-            governing contract for this audit. Read the retest report, read this skill,
-            then read the rubric files and retest report template/schema that this skill
-            points to. Verify that passed fixes, carried-forward failures, severity
-            labels, overall retest outcome, and written conclusions follow the rubric
-            files and the template/schema exactly. Do not do a fresh independent retest
-            judgment; only check whether the report was written according to the
-            evaluator-write-retest skill and the rubric/schema files it points to. If the
-            report violates that contract, respond with {"ok": false, "reason": "short
-            explanation naming the rubric or schema mismatch"}. Otherwise respond with
-            {"ok": true}.
 ---
 
 # Evaluator Write Retest

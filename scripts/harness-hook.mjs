@@ -34,7 +34,8 @@ if (!mode) {
 let payload = {};
 try {
   const stdin = await readStdin();
-  payload = stdin.trim() ? JSON.parse(stdin) : {};
+  const normalized = stdin.replace(/^\uFEFF/, "").trim();
+  payload = normalized ? JSON.parse(normalized) : {};
 } catch {
   payload = {};
 }

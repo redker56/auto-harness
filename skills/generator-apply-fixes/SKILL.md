@@ -2,27 +2,6 @@
 name: generator-apply-fixes
 description: Internal Auto-Harness generator skill for QA fix cycles. Use only inside the Generator subagent when it is addressing named defects from QA or retest.
 user-invocable: false
-hooks:
-  PreToolUse:
-    - matcher: "Write"
-      hooks:
-        - type: command
-          if: "Write(/.harness/**)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool generator-apply-fixes
-    - matcher: "Edit"
-      hooks:
-        - type: command
-          if: "Edit(/.harness/**)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool generator-apply-fixes
-    - matcher: "MultiEdit"
-      hooks:
-        - type: command
-          if: "MultiEdit(/.harness/**)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool generator-apply-fixes
-  Stop:
-    - hooks:
-        - type: command
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" stop generator-apply-fixes
 ---
 
 # Generator Apply Fixes

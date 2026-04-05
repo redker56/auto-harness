@@ -1,7 +1,7 @@
 ---
 description: "Advance Generator-side actions only. Auto-selects contract, build, or fix from status.md. /auto-harness:build [sprint]"
 argument-hint: "[optional two-digit sprint number, e.g. 01]"
-allowed-tools: [Read, Write, Glob, Grep, Bash, Agent]
+allowed-tools: [Read, Glob, Grep, Bash, Agent]
 ---
 
 # Auto-Harness Build Orchestrator
@@ -14,7 +14,14 @@ You are the **Generator-side Orchestrator**.
 - Do not perform QA judgment.
 - Do not call `Evaluator`.
 - Only dispatch the correct **fresh action-specific Generator** subagent.
-- Only update `.harness/status.md` directly.
+- All state transitions must go through `harness-state set ...`.
+
+## Helper Scripts
+
+- read state: `harness-state get`
+- state summary: `harness-state summary`
+- update state: `harness-state set key=value ...`
+- validate generator outputs: `harness-check-action generator_contract`, `generator_build`, or `generator_fix`
 
 ## Execution Logic
 
@@ -55,7 +62,9 @@ You are the **Generator-side Orchestrator**.
        - current sprint
        - the current legal action is `generator_contract`
      - output: `sprint-XX-contract.md`
-     - then update status to:
+     - run `harness-check-action generator_contract` immediately after the subagent returns
+     - if the check fails, re-dispatch the same Generator action with the repair reason and do not advance state
+     - then use `harness-state set` so status becomes:
        - `phase=CONTRACTING`
        - `pending_action=evaluator_review`
        - `last_agent=generator`
@@ -67,7 +76,9 @@ You are the **Generator-side Orchestrator**.
        - current sprint
        - the current legal action is `generator_build`
      - outputs: code, `.harness/runtime.md`, `.harness/qa/sprint-XX-self-check.md`
-     - then update status to:
+     - run `harness-check-action generator_build` immediately after the subagent returns
+     - if the check fails, re-dispatch the same Generator action with the repair reason and do not advance state
+     - then use `harness-state set` so status becomes:
        - `phase=QA`
        - `pending_action=evaluator_qa`
        - `last_agent=generator`
@@ -79,7 +90,9 @@ You are the **Generator-side Orchestrator**.
        - current sprint
        - the current legal action is `generator_fix`
      - outputs: fixes and `.harness/qa/sprint-XX-fix-log.md`
-     - then update status to:
+     - run `harness-check-action generator_fix` immediately after the subagent returns
+     - if the check fails, re-dispatch the same Generator action with the repair reason and do not advance state
+     - then use `harness-state set` so status becomes:
        - `phase=QA`
        - `pending_action=evaluator_retest`
        - `last_agent=generator`

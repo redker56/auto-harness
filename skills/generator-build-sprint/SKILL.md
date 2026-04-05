@@ -2,27 +2,6 @@
 name: generator-build-sprint
 description: Internal Auto-Harness generator skill for approved sprint implementation. Use only inside the Generator subagent during build mode.
 user-invocable: false
-hooks:
-  PreToolUse:
-    - matcher: "Write"
-      hooks:
-        - type: command
-          if: "Write(/.harness/**)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool generator-build-sprint
-    - matcher: "Edit"
-      hooks:
-        - type: command
-          if: "Edit(/.harness/**)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool generator-build-sprint
-    - matcher: "MultiEdit"
-      hooks:
-        - type: command
-          if: "MultiEdit(/.harness/**)"
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" pretool generator-build-sprint
-  Stop:
-    - hooks:
-        - type: command
-          command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" stop generator-build-sprint
 ---
 
 # Generator Build Sprint
