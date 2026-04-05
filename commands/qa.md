@@ -58,11 +58,12 @@ You are the **Evaluator-side Orchestrator**.
        - the current legal action is `evaluator_review`
      - output: `sprint-XX-review.md`
      - read the result:
-       - `REVISE` -> update status to:
-         - `phase=CONTRACTING`
-         - `pending_action=generator_contract`
-         - `last_agent=evaluator`
-         - `approval_required=false`
+      - `REVISE` -> update status to:
+        - `phase=CONTRACTING`
+        - `pending_action=generator_contract`
+        - `last_agent=evaluator`
+        - `approval_required=false`
+        - keep the current review artifact so the next Generator run can revise the contract against it
        - `APPROVED` -> update status to:
          - `phase=BUILDING`
          - `pending_action=generator_build`

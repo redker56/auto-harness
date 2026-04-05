@@ -63,8 +63,8 @@ At the start of this action, read these harness artifacts from the project:
 - `.harness/status.md`
 - `.harness/intake.md`
 - `.harness/spec.md`
-- `.harness/design-direction.md` when it exists.
-- `.harness/runtime.md` when it exists.
+- `.harness/design-direction.md`
+- `.harness/runtime.md`
 - Every sprint review in `.harness/contracts/`.
 - Every sprint QA report, retest report, self-check, and fix log in `.harness/qa/`.
 - `.harness/final/qa-final-report.md` when revising an existing final report.

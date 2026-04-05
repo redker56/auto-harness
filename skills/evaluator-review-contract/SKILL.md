@@ -34,7 +34,7 @@ At the start of this action, read these harness artifacts from the project:
 - `.harness/status.md`
 - `.harness/intake.md`
 - `.harness/spec.md`
-- `.harness/design-direction.md` when it already exists.
+- `.harness/design-direction.md`
 - `.harness/contracts/sprint-XX-contract.md`
 - `.harness/contracts/sprint-XX-review.md` when revising an existing review.
 
