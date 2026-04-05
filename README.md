@@ -1,25 +1,25 @@
-# Auto-Harness
+﻿# Auto-Harness
 
-[English](README.md) | [简体中文](README.zh-CN.md)
+[English](README.md) | [中文](README.zh-CN.md)
 
-This plugin is based on Anthropic's article, [Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps), and adapts those ideas into a Claude Code plugin with commands, hooks, durable artifacts, and role-pure subagents.
+This plugin is based on Anthropic's article, [Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps).
 
-The design goal is simple: planning, implementation, QA, fixes, and resume/recovery should survive long sessions, compaction, and context resets without turning the main thread into a giant prompt dump.
+Auto-Harness is a Claude Code plugin for long-running application work. It turns planning, implementation, QA, fix loops, and resume/recovery into a file-backed workflow under `.harness/` while keeping the main thread role-pure.
 
-At a glance, the plugin is built around three ideas:
-
-- the main thread orchestrates, but does not write product code or QA verdicts
-- sprint work is negotiated through file-backed contracts before implementation
-- Evaluator must verify the primary path from the running app before a sprint can pass
+- `commands/` stay as the control plane
+- `agents/` are action-specific subagents, one legal harness action per agent
+- `skills/` hold action-specific behavior such as `planner-clarify` and `evaluator-write-qa`
+- `hooks/` and skill-scoped hooks enforce boundaries, report schemas, and resume behavior
+- `scripts/` provide state, runtime, report validation, and checkpoint helpers
 
 ## What It Gives You
 
-- A strict three-role workflow: `Planner`, `Generator`, `Evaluator`
+- A strict action-specific workflow across the `Planner`, `Generator`, and `Evaluator` roles
 - A durable project state directory at `.harness/`
 - A contract-first sprint loop with review before implementation
 - Browser-capable QA through Playwright MCP on the Evaluator side
 - Session resume support through hooks and checkpoint snapshots
-- Shared guidance modules so agent kernels stay small and role-pure
+- Internal action skills so subagent behavior is narrow, explicit, and easier to evolve
 
 ## Runtime Model
 
@@ -35,52 +35,36 @@ The main thread only does these things:
 
 The main thread does not draft the spec, write app code, or make QA judgments.
 
-### Planner
+### Action-Specific Subagents
 
-`Planner` is a fresh subagent used for:
+Auto-Harness now dispatches one focused subagent per legal harness action:
 
-- clarification intake
-- locked architecture and stack decisions
-- sprint planning
-- design-direction drafting
+- `planner-clarify-agent`
+- `planner-spec-draft-agent`
+- `generator-draft-contract-agent`
+- `generator-build-sprint-agent`
+- `generator-apply-fixes-agent`
+- `evaluator-review-contract-agent`
+- `evaluator-write-qa-agent`
+- `evaluator-write-retest-agent`
+- `evaluator-write-final-agent`
 
-`Planner` writes only inside `.harness/`.
-
-### Generator
-
-`Generator` is a fresh subagent used for:
-
-- sprint contract drafting
-- implementation
-- defect fixes after QA
-
-`Generator` writes code and the Generator-owned `.harness/` artifacts, but it never updates status, review files, QA reports, retest reports, or the final report.
-
-### Evaluator
-
-`Evaluator` is a fresh subagent used for:
-
-- contract review
-- runtime QA
-- retest after fixes
-- final reporting
-
-`Evaluator` is intentionally read-only with respect to application code. It judges the running app and the named artifacts rather than trusting Generator intent.
+Each action-specific agent preloads exactly one internal skill and reads the current project `.harness/` state for itself. Action-specific skills are the primary behavior layer; templates, rubrics, packs, hooks, and local protocol references support them.
 
 ## End-To-End Flow
 
 ```text
 User brief
   -> Orchestrator
-  -> Planner clarification questionnaire
+  -> planner-clarify-agent
   -> user answers inline in chat
-  -> Planner spec + design direction
+  -> planner-spec-draft-agent
   -> user approves or requests revisions
-  -> Generator contract draft
-  -> Evaluator contract review
-  -> Generator build
-  -> Evaluator QA
-  -> if FAIL: Generator fix -> Evaluator retest
+  -> generator-draft-contract-agent
+  -> evaluator-review-contract-agent
+  -> generator-build-sprint-agent
+  -> evaluator-write-qa-agent
+  -> if FAIL: generator-apply-fixes-agent -> evaluator-write-retest-agent
   -> next sprint or final report
 ```
 
@@ -95,33 +79,27 @@ The user interaction happens in chat. `.harness/*.md` is the durable log, not a 
 - a target project directory where Auto-Harness is allowed to create `.harness/`
 - Playwright MCP support if you want browser QA
 
-If you do not see plugin-related commands in Claude Code, update Claude Code first.
-
 ### Install From GitHub
 
 1. Open Claude Code in the project where you want to use Auto-Harness.
-2. Add the GitHub repository as a plugin marketplace:
+2. Add the repository as a plugin marketplace:
 
 ```text
 /plugin marketplace add redker56/auto-harness
 ```
 
-1. Install the plugin from that marketplace:
+1. Install the plugin:
 
 ```text
 /plugin install auto-harness@auto-harness-marketplace
 ```
 
-1. Restart Claude Code so the newly installed plugin is loaded.
-2. Run the main command:
+1. Restart Claude Code.
+2. Run:
 
 ```text
 /auto-harness:harness <your product brief or clarification reply>
 ```
-
-1. Answer the clarification questions inline in chat.
-2. Approve the generated spec inline in chat, or reply with revisions.
-3. Let the sprint loop continue until the final report is produced.
 
 ### Minimal Operator Mental Model
 
@@ -141,8 +119,6 @@ The default command. It can handle:
 - spec approval
 - later resume of the current sprint state
 
-Use this when you want the orchestrator to choose the next legal step automatically and keep advancing through multiple legal steps in the same invocation until it hits a user-blocking state, a structurally invalid QA report, or `DONE`. Subagent or artifact failure should be treated as an internal recovery problem for the orchestrator to solve within the same loop, not as a reason to stop.
-
 ### `/auto-harness:plan <brief-or-clarification-answers>`
 
 Planning-only mode. It can:
@@ -152,8 +128,6 @@ Planning-only mode. It can:
 - draft `.harness/spec.md`
 - draft `.harness/design-direction.md`
 
-It stops at spec approval and does not enter the sprint loop.
-
 ### `/auto-harness:build [XX]`
 
 Generator-side mode. It auto-selects the current legal Generator action from `.harness/status.md`:
@@ -161,8 +135,6 @@ Generator-side mode. It auto-selects the current legal Generator action from `.h
 - contract drafting
 - build
 - fix
-
-Use it when you want to continue implementation work without running the full harness loop.
 
 ### `/auto-harness:qa [XX]`
 
@@ -173,11 +145,7 @@ Evaluator-side mode. It auto-selects the current legal Evaluator action from `.h
 - retest
 - final reporting
 
-Use it when you want to re-run verification after manual edits or resume the QA side only.
-
 ## `.harness/` Artifact Contract
-
-Auto-Harness creates a per-project state directory:
 
 ```text
 .harness/
@@ -204,13 +172,13 @@ Auto-Harness creates a per-project state directory:
 
 | Artifact | Owner | Purpose |
 | --- | --- | --- |
-| `.harness/intake.md` | Planner | Clarified requirements, locked decisions, constraints, selected pack, selected rubric |
+| `.harness/intake.md` | Planner | Clarified requirements, locked decisions, constraints, and selected pack |
 | `.harness/spec.md` | Planner | Approved implementation plan and sprint breakdown |
 | `.harness/design-direction.md` | Planner | UI, interaction, or product direction that Generator should follow |
-| `.harness/status.md` | Orchestrator | Machine-readable state source of truth |
+| `.harness/status.md` | Planner + Orchestrator | Machine-readable state source of truth initialized by Planner and advanced by Orchestrator |
 | `.harness/runtime.md` | Generator | Runtime contract for launching and verifying the app |
 | `.harness/contracts/sprint-XX-contract.md` | Generator | Proposed sprint implementation contract |
-| `.harness/contracts/sprint-XX-review.md` | Evaluator | Contract review result, including required revisions |
+| `.harness/contracts/sprint-XX-review.md` | Evaluator | Contract review result |
 | `.harness/qa/sprint-XX-self-check.md` | Generator | Generator self-check before QA handoff |
 | `.harness/qa/sprint-XX-qa-report.md` | Evaluator | Sprint QA result |
 | `.harness/qa/sprint-XX-fix-log.md` | Generator | Fixes applied after a failed QA run |
@@ -230,11 +198,9 @@ pending_action: evaluator_review
 last_agent: generator
 approval_required: false
 selected_pack: default
-selected_rubric: default-grading
-updated_at: 2026-04-04T12:00:00.000Z
 ```
 
-### Typical Phases
+Typical phases:
 
 - `AWAITING_BRIEF_CLARIFICATION`
 - `AWAITING_SPEC_APPROVAL`
@@ -244,7 +210,7 @@ updated_at: 2026-04-04T12:00:00.000Z
 - `FIXING`
 - `DONE`
 
-### Typical Pending Actions
+Typical pending actions:
 
 - `brief_clarification`
 - `spec_approval`
@@ -256,8 +222,6 @@ updated_at: 2026-04-04T12:00:00.000Z
 - `evaluator_retest`
 - `evaluator_final`
 
-The command layer uses `phase`, `current_sprint`, `total_sprints`, and `pending_action` to determine the next legal action. This prevents users or subagents from skipping unfinished stages.
-
 ## Repository Layout
 
 ```text
@@ -265,11 +229,16 @@ auto-harness/
 |-- .claude-plugin/
 |   |-- marketplace.json
 |   `-- plugin.json
-|-- LICENSE
 |-- agents/
-|   |-- planner.md
-|   |-- generator.md
-|   `-- evaluator.md
+|   |-- planner-clarify-agent.md
+|   |-- planner-spec-draft-agent.md
+|   |-- generator-draft-contract-agent.md
+|   |-- generator-build-sprint-agent.md
+|   |-- generator-apply-fixes-agent.md
+|   |-- evaluator-review-contract-agent.md
+|   |-- evaluator-write-qa-agent.md
+|   |-- evaluator-write-retest-agent.md
+|   `-- evaluator-write-final-agent.md
 |-- commands/
 |   |-- harness.md
 |   |-- plan.md
@@ -283,41 +252,56 @@ auto-harness/
 |   |-- harness-report.mjs
 |   |-- harness-runtime.mjs
 |   `-- harness-state.mjs
-|-- modules/
-|   |-- protocols/
-|   |-- templates/
-|   |-- rubrics/
-|   |-- clarification/
-|   |-- catalogs/
-|   `-- packs/
+|-- skills/
+|   |-- planner-clarify/
+|   |-- planner-spec-draft/
+|   |-- generator-draft-contract/
+|   |-- generator-build-sprint/
+|   |-- generator-apply-fixes/
+|   |-- evaluator-review-contract/
+|   |-- evaluator-write-qa/
+|   |-- evaluator-write-retest/
+|   `-- evaluator-write-final/
 |-- .mcp.json
-`-- README.md
+|-- LICENSE
+|-- README.md
+`-- README.zh-CN.md
 ```
 
-## Module Library
+## Internal Skills
 
-`modules/` is the shared operating library. The agent kernels stay intentionally small and pull their real operating guidance from these reusable modules.
+Each subagent action is backed by an internal skill with its own supporting files and hooks.
 
-- `modules/protocols/`: role boundaries, contracts, file ownership rules
-- `modules/templates/`: output templates for intake, spec, contracts, reports, and runtime
-- `modules/rubrics/`: grading criteria used by Evaluator
-- `modules/clarification/`: question families and clarification strategy for Planner
-- `modules/catalogs/`: architecture and stack option catalogs
-- `modules/packs/`: reusable opinion bundles such as `default`, `internal-tool`, `mobile-first`, and stack-specific packs
+Examples:
 
-Planner receives protocols, clarification guidance, catalogs, templates, and packs. Generator receives protocols, implementation templates, and packs. Evaluator receives protocols, rubrics, evaluation templates, and packs.
+- `planner-clarify`: clarification intake only
+- `generator-build-sprint`: approved sprint implementation only
+- `evaluator-write-qa`: QA execution plus QA report enforcement
 
-Module files are discovered automatically from the existing supported `modules/` subdirectories and filtered by `applies_to` frontmatter. If you add a new module file under one of those supported directories with the correct `applies_to` value, it becomes live without patching a per-file list. If you introduce a new bundle category or module directory, update the injection configuration in `scripts/harness-lib.mjs` as well.
+These skills are internal:
+
+- not shown as user-facing workflow commands
+- not intended for direct operator use
+- preloaded by the matching subagent kernel
+- responsible for action-specific rules, templates, packs, and report gates
 
 ## Hooks And Resume Behavior
 
-`hooks/hooks.json` wires three lifecycle events:
+The plugin uses two layers of hooks:
+
+- plugin-level hooks in `hooks/hooks.json`
+- skill-scoped hooks in the internal skills
+
+Plugin-level hooks:
 
 - `SessionStart`: reads `.harness/status.md`, includes a checkpoint excerpt, and reminds the session to resume instead of restarting planning
-- `SubagentStart`: injects role-specific operating guidance assembled from `modules/`
 - `PreCompact`: refreshes `.harness/checkpoints/latest.md` before compaction
 
-This is what makes Auto-Harness resilient to long sessions and context compaction.
+Skill-scoped hooks enforce action boundaries, for example:
+
+- planner skills can only write planner-owned `.harness/` files
+- generator skills cannot touch `status.md`, review files, QA reports, retest reports, or the final report
+- evaluator report skills validate report structure and consistency before the subagent can finish
 
 ## Playwright MCP
 
@@ -329,100 +313,34 @@ npx -y @playwright/mcp@latest
 
 In practice:
 
-- Planner and Generator are kept away from MCP-driven browser work
-- Evaluator inherits MCP access and can use it for browser QA
+- Planner and Generator stay away from MCP-driven browser work
+- Evaluator inherits MCP access for browser QA
 - Evaluator can also call the runtime helper to perform health checks before or during QA
 
 ## Helper Scripts
 
 ### State Helper
 
-Read the current status document:
-
-```bash
+```text
 node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-state.mjs" get
-```
-
-Print a short summary:
-
-```bash
 node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-state.mjs" summary
-```
-
-Update specific frontmatter keys:
-
-```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-state.mjs" set phase=QA pending_action=evaluator_qa
-```
-
-Refresh the checkpoint snapshot:
-
-```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-state.mjs" set key=value ...
 node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-state.mjs" checkpoint auto
 ```
 
-All state commands default to the current working directory as the project root. You can also pass an explicit project root before the key-value pairs.
-
 ### Runtime Helper
 
-Read `.harness/runtime.md`:
-
-```bash
+```text
 node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-runtime.mjs" get
-```
-
-Run an HTTP health check:
-
-```bash
 node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-runtime.mjs" healthcheck
 ```
 
-The health check currently expects:
+### Report Helper
 
-- `healthcheck_method: http-get`
-- `healthcheck_url`, or `access_url` as a fallback
-
-### QA Report Helper
-
-Validate the current sprint QA report structure:
-
-```bash
+```text
 node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" qa validate
-```
-
-Read the validated PASS/FAIL result:
-
-```bash
 node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" qa result
+node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" retest validate
+node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" final validate
 ```
 
-This helper checks that the QA report includes the required sections and tables:
-
-- `Result`
-- `Primary Path Exercise`
-- `Contract Behaviors`
-- `Bugs`
-- `Hard-Fail Gates`
-- `Scorecard`
-- `Verdict`
-
-## Design Rules
-
-- The main thread stays orchestration-only.
-- Every delegation uses a fresh subagent.
-- Important decisions go into files, not chat history.
-- Generator cannot implement before contract approval.
-- Evaluator judges outcomes from files and runtime behavior, not from optimistic explanations.
-- Resume should continue from `.harness/status.md`, not restart the entire planning loop.
-
-## When To Reach For It
-
-Auto-Harness is most useful when:
-
-- the task will take multiple rounds or multiple sprints
-- the project needs durable planning artifacts
-- you want a clean separation between implementation and QA judgment
-- you expect session restarts, compaction, or interrupted work
-- browser verification matters
-
-It is probably overkill for tiny one-shot edits where a single direct coding pass is enough.

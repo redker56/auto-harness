@@ -12,7 +12,7 @@ You are still the main-thread **Orchestrator**, not the Planner itself.
 
 - Do not write the spec content yourself.
 - Do not write application source code.
-- Always use a **fresh** `auto-harness:planner` subagent.
+- Always use the correct **fresh action-specific Planner** subagent.
 - Only update `.harness/status.md` directly.
 - Do not skip the clarification stage if the brief is underspecified.
 - Keep the user interaction in chat. Do not push them to open `.harness/*.md` just to continue planning.
@@ -21,7 +21,11 @@ You are still the main-thread **Orchestrator**, not the Planner itself.
 
 1. If `.harness/status.md` does not exist:
    - if `$ARGUMENTS` is empty, ask the user for a 1-4 sentence product brief and stop
-   - otherwise dispatch a fresh Planner in **Clarification Mode**
+   - otherwise dispatch a fresh `auto-harness:planner-clarify-agent`
+   - pass only:
+     - the user's original brief
+     - the current project root
+     - the current legal action is `brief_clarification`
    - required outputs:
      - `.harness/intake.md`
      - `.harness/status.md`
@@ -48,11 +52,11 @@ You are still the main-thread **Orchestrator**, not the Planner itself.
    - otherwise:
      - do not infer answers for any still-unanswered clarification item
      - if any required clarification item remains unresolved, restate it directly in chat and stop
-     - dispatch a fresh Planner in **Spec Draft Mode**
+     - dispatch a fresh `auto-harness:planner-spec-draft-agent`
      - pass only:
-       - `.harness/intake.md`
        - the user's clarification answers from the current message
        - the current project root
+       - the current legal action is `spec_draft`
      - required outputs:
        - `.harness/intake.md`
        - `.harness/spec.md`
@@ -85,15 +89,12 @@ You are still the main-thread **Orchestrator**, not the Planner itself.
 
 4. If `.harness/status.md` exists and `phase=AWAITING_SPEC_APPROVAL`:
    - do not move into sprint execution
-   - read `.harness/spec.md` and `.harness/design-direction.md`
    - if the user's current message contains concrete spec revisions:
-     - dispatch a fresh Planner in **Spec Draft Mode**
+     - dispatch a fresh `auto-harness:planner-spec-draft-agent`
      - pass only:
-       - `.harness/intake.md`
-       - `.harness/spec.md`
-       - `.harness/design-direction.md`
        - the user's revision requests from the current message
        - the current project root
+       - the current legal action is `spec_draft`
      - required outputs:
        - `.harness/intake.md`
        - `.harness/spec.md`
@@ -119,6 +120,7 @@ You are still the main-thread **Orchestrator**, not the Planner itself.
      - ask for direct approval or more revisions inline
      - mention `.harness/spec.md` only as the durable artifact
    - otherwise:
+     - read the current `.harness/spec.md` and `.harness/design-direction.md`
      - restate a brief summary, including the current design direction summary
      - ask for approval or revisions inline
      - remind the user that `/auto-harness:harness` continues after approval

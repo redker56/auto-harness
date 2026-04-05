@@ -1,7 +1,7 @@
 {
   "name": "auto-harness",
   "version": "0.1.0",
-  "description": "Orchestrated long-running coding harness for Claude Code with agents, commands, hooks, scripts, and modules. The main thread coordinates fresh Planner, Generator, and Evaluator subagents through shared guidance, .harness artifacts, contract review, sprint QA, and Playwright-based browser verification.",
+  "description": "Orchestrated long-running coding harness for Claude Code with commands, action-specific subagents, internal action skills, hooks, and durable .harness artifacts. The main thread coordinates fresh action-specific Planner, Generator, and Evaluator-role subagents through contract review, sprint QA, fix loops, and Playwright-based browser verification.",
   "author": {
     "name": "redker56"
   },
@@ -13,6 +13,8 @@
     "planner",
     "generator",
     "evaluator",
+    "skills",
+    "hooks",
     "playwright",
     "qa",
     "sprint",

@@ -1,183 +1,151 @@
 # Auto-Harness
 
-[English](README.md) | [简体中文](README.zh-CN.md)
+[English](README.md) | [中文](README.zh-CN.md)
 
-本插件基于 Anthropic 的文章 [Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps) 开发，并将其中的思路落地为一个 Claude Code 插件：通过 commands、hooks、可持久化 artifacts，以及职责清晰的 subagents 来组织长时任务。
+这个插件基于 Anthropic 的文章 [Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps) 开发。
 
-它的目标很简单：让规划、实现、QA、修复、恢复与续跑能够跨越长会话、上下文压缩和上下文重置稳定进行，而不是把主线程变成一个越来越臃肿的提示词堆。
+Auto-Harness 是一个面向 Claude Code 的长周期开发插件。它把规划、实现、QA、修复循环和恢复继续执行都沉淀到 `.harness/` 目录里，同时保持主线程只负责编排，不直接代写产品代码或 QA 结论。
 
-从整体上看，这个插件围绕 3 个核心原则构建：
+- `commands/` 继续作为控制面
+- `agents/` 是动作级 subagent，每个 agent 只负责一个合法的 Auto-Harness action
+- `skills/` 承载动作级行为，例如 `planner-clarify` 和 `evaluator-write-qa`
+- `hooks/` 与 skill 自带 hooks 负责边界约束、报告校验和恢复上下文
+- `scripts/` 提供状态、运行时、报告校验和 checkpoint 辅助能力
 
-- 主线程只做编排，不直接写产品代码，也不直接给 QA 结论
-- 每个 sprint 都先通过文件化 contract 对齐，再开始实现
-- `Evaluator` 必须基于正在运行的应用验证主路径，sprint 才能通过
+## 你会得到什么
 
-## 你能得到什么
-
-- 一套严格的三角色工作流：`Planner`、`Generator`、`Evaluator`
-- 一个持久化的项目状态目录：`.harness/`
-- 一套先 contract、后实现、再 review/QA 的 sprint 循环
-- `Evaluator` 侧可用的 Playwright MCP 浏览器 QA 能力
-- 通过 hooks 和 checkpoint 快照支持长会话恢复
-- 共享 guidance modules，让 agent kernel 保持精简且职责单一
+- 严格的 Planner / Generator / Evaluator 动作级工作流
+- 持久化的 `.harness/` 项目状态目录
+- 先 contract review 再实现的 sprint 循环
+- Evaluator 侧可用 Playwright MCP 做浏览器 QA
+- 通过 hooks 和 checkpoint 实现的恢复能力
+- 通过 internal skills 实现的动作级约束，而不是大而泛的共享提示词
 
 ## 运行模型
 
-### 主线程：Orchestrator
+### Main Thread: Orchestrator
 
-主线程只做这些事：
+主线程只负责：
 
-- 读取 `.harness/` 中的项目状态
-- 决定当前应该进入哪个阶段
-- 分派 fresh subagent
+- 读取 `.harness/` 状态
+- 判断下一步合法阶段
+- 派发新的 subagent
 - 更新 `.harness/status.md`
 - 在需要澄清或审批时直接与用户对话
 
-主线程不会起草 spec、不会写应用代码，也不会做 QA 判断。
+主线程不写 spec，不写业务代码，也不下 QA 结论。
 
-### Planner
+### Action-Specific Subagents
 
-`Planner` 是一个 fresh subagent，负责：
+Auto-Harness 会按合法动作派发这些 focused subagent：
 
-- 澄清需求 intake
-- 锁定架构和技术栈决策
-- sprint 规划
-- 起草 design direction
+- `planner-clarify-agent`
+- `planner-spec-draft-agent`
+- `generator-draft-contract-agent`
+- `generator-build-sprint-agent`
+- `generator-apply-fixes-agent`
+- `evaluator-review-contract-agent`
+- `evaluator-write-qa-agent`
+- `evaluator-write-retest-agent`
+- `evaluator-write-final-agent`
 
-`Planner` 只在 `.harness/` 内写文件。
-
-### Generator
-
-`Generator` 是一个 fresh subagent，负责：
-
-- 起草 sprint contract
-- 具体实现
-- QA 失败后的缺陷修复
-
-`Generator` 会写代码和属于 `Generator` 的 `.harness/` artifacts，但不会更新状态、不会写 review 文件、不会写 QA report、不会写 retest report，也不会写 final report。
-
-### Evaluator
-
-`Evaluator` 是一个 fresh subagent，负责：
-
-- contract review
-- runtime QA
-- 修复后的 retest
-- 最终报告
-
-`Evaluator` 对应用代码保持只读。它依据正在运行的应用和被点名的 artifacts 来做判断，而不是相信 `Generator` 的自我描述。
+每个动作级 agent 都只预加载一个 internal skill，并自行读取当前项目里的 `.harness/` 状态。动作级 skill 是主要行为层；模板、rubric、pack、hooks 和本地 protocol references 为它提供支撑。
 
 ## 端到端流程
 
 ```text
-用户 brief
+User brief
   -> Orchestrator
-  -> Planner 澄清问卷
-  -> 用户在 chat 中直接回答
-  -> Planner 输出 spec + design direction
-  -> 用户批准或提出修改
-  -> Generator 起草 contract
-  -> Evaluator 做 contract review
-  -> Generator build
-  -> Evaluator QA
-  -> 如果 FAIL: Generator fix -> Evaluator retest
-  -> 进入下一 sprint 或 final report
+  -> planner-clarify-agent
+  -> user answers inline in chat
+  -> planner-spec-draft-agent
+  -> user approves or requests revisions
+  -> generator-draft-contract-agent
+  -> evaluator-review-contract-agent
+  -> generator-build-sprint-agent
+  -> evaluator-write-qa-agent
+  -> if FAIL: generator-apply-fixes-agent -> evaluator-write-retest-agent
+  -> next sprint or final report
 ```
 
-用户交互发生在 chat 中。`.harness/*.md` 是持久化日志，而不是要求用户必须手动打开才能继续的文档。
+用户交互始终发生在 chat 里；`.harness/*.md` 是持久化日志，而不是强迫用户手动打开才能继续的文档。
 
 ## 快速开始
 
 ### 前置条件
 
-- 已安装并完成认证的 Claude Code
-- `PATH` 中可用的 Node.js
-- 一个允许 Auto-Harness 创建 `.harness/` 的目标项目目录
-- 如果你想做浏览器 QA，需要 Playwright MCP 支持
-
-如果你在 Claude Code 中看不到插件相关命令，请先升级 Claude Code。
+- 已安装并登录 Claude Code
+- `PATH` 中可用 `Node.js`
+- 目标项目目录允许创建 `.harness/`
+- 如果要做浏览器 QA，需要具备 Playwright MCP 支持
 
 ### 从 GitHub 安装
 
-1. 在你希望使用 Auto-Harness 的项目中打开 Claude Code。
-2. 将 GitHub 仓库添加为插件 marketplace：
+1. 在目标项目中打开 Claude Code。
+2. 添加插件 marketplace：
 
 ```text
 /plugin marketplace add redker56/auto-harness
 ```
 
-1. 从该 marketplace 安装插件：
+1. 安装插件：
 
 ```text
 /plugin install auto-harness@auto-harness-marketplace
 ```
 
-1. 重启 Claude Code，让新安装的插件被加载。
-2. 运行主命令：
+1. 重启 Claude Code。
+2. 运行：
 
 ```text
 /auto-harness:harness <你的产品 brief 或澄清回复>
 ```
 
-1. 在 chat 中直接回答澄清问题。
-2. 在 chat 中直接批准生成的 spec，或者回复修改意见。
-3. 让 sprint loop 持续推进，直到 final report 生成。
-
-### 最小操作心智模型
+### 最小操作心智
 
 - 正常端到端流程用 `/auto-harness:harness`
-- 只做 intake 和 spec 阶段用 `/auto-harness:plan`
-- 只推进 Generator 侧工作用 `/auto-harness:build`
-- 只推进 Evaluator 侧工作用 `/auto-harness:qa`
+- 只做 intake 和 spec 用 `/auto-harness:plan`
+- 只推进 Generator 侧用 `/auto-harness:build`
+- 只推进 Evaluator 侧用 `/auto-harness:qa`
 
 ## Commands
 
 ### `/auto-harness:harness <brief-or-reply>`
 
-这是默认命令。它可以处理：
+默认命令，可处理：
 
 - 初始产品 brief
 - clarification answers
 - spec approval
-- 后续对当前 sprint 状态的恢复与续跑
-
-当你希望 orchestrator 自动选择下一个合法步骤，并在同一次调用里持续推进多个合法步骤，直到遇到用户阻塞状态、结构无效的 QA report，或者 `DONE` 时，就使用它。subagent 或 artifact 失败应该被视为 orchestrator 在同一 loop 内自行恢复的问题，而不是停下来的理由。
+- 当前 sprint 状态的后续恢复
 
 ### `/auto-harness:plan <brief-or-clarification-answers>`
 
-纯规划模式。它可以：
+规划模式，可：
 
 - 初始化 `.harness/intake.md`
 - 提出澄清问题
-- 起草 `.harness/spec.md`
-- 起草 `.harness/design-direction.md`
-
-它会在 spec approval 处停止，不会进入 sprint loop。
+- 生成 `.harness/spec.md`
+- 生成 `.harness/design-direction.md`
 
 ### `/auto-harness:build [XX]`
 
-Generator 侧模式。它会从 `.harness/status.md` 自动选择当前合法的 Generator 动作：
+Generator 侧命令，会从 `.harness/status.md` 自动选择当前合法动作：
 
 - contract drafting
 - build
 - fix
 
-当你只想继续实现工作，而不跑完整 harness loop 时，使用它。
-
 ### `/auto-harness:qa [XX]`
 
-Evaluator 侧模式。它会从 `.harness/status.md` 自动选择当前合法的 Evaluator 动作：
+Evaluator 侧命令，会从 `.harness/status.md` 自动选择当前合法动作：
 
 - contract review
 - QA
 - retest
 - final reporting
 
-当你想在手动修改后重新验证，或者只恢复 QA 侧工作时，使用它。
-
 ## `.harness/` Artifact Contract
-
-Auto-Harness 会为每个项目创建一个状态目录：
 
 ```text
 .harness/
@@ -204,23 +172,23 @@ Auto-Harness 会为每个项目创建一个状态目录：
 
 | Artifact | Owner | Purpose |
 | --- | --- | --- |
-| `.harness/intake.md` | Planner | 澄清后的需求、锁定决策、约束、selected pack、selected rubric |
+| `.harness/intake.md` | Planner | 已澄清需求、锁定决策、约束与 selected pack |
 | `.harness/spec.md` | Planner | 已批准的实现计划与 sprint 拆分 |
-| `.harness/design-direction.md` | Planner | `Generator` 需要遵循的 UI / 交互 / 产品方向 |
-| `.harness/status.md` | Orchestrator | 机器可读的状态唯一真源 |
-| `.harness/runtime.md` | Generator | 用于启动和验证应用的 runtime contract |
-| `.harness/contracts/sprint-XX-contract.md` | Generator | 提议中的 sprint 实现 contract |
-| `.harness/contracts/sprint-XX-review.md` | Evaluator | contract review 结果，包括必须修改项 |
-| `.harness/qa/sprint-XX-self-check.md` | Generator | 交给 QA 前的自检 |
+| `.harness/design-direction.md` | Planner | Generator 应遵循的 UI / 交互 / 产品方向 |
+| `.harness/status.md` | Planner + Orchestrator | 机器可读的状态真源：由 Planner 初始化，由 Orchestrator 推进 |
+| `.harness/runtime.md` | Generator | 启动和校验应用的运行时契约 |
+| `.harness/contracts/sprint-XX-contract.md` | Generator | 当前 sprint 的实现 contract |
+| `.harness/contracts/sprint-XX-review.md` | Evaluator | contract review 结果 |
+| `.harness/qa/sprint-XX-self-check.md` | Generator | QA 前的自检 |
 | `.harness/qa/sprint-XX-qa-report.md` | Evaluator | sprint QA 结果 |
 | `.harness/qa/sprint-XX-fix-log.md` | Generator | QA 失败后的修复记录 |
 | `.harness/qa/sprint-XX-retest.md` | Evaluator | 修复后的 retest 结果 |
-| `.harness/final/qa-final-report.md` | Evaluator | 整个流程结束后的最终评估 |
-| `.harness/checkpoints/latest.md` | Hook/script | 用于会话重启或 compaction 恢复的快照 |
+| `.harness/final/qa-final-report.md` | Evaluator | 最终评估报告 |
+| `.harness/checkpoints/latest.md` | Hook/script | session restart 或 compaction 时使用的 checkpoint |
 
-## 状态模型
+## Status Model
 
-`.harness/status.md` 的 frontmatter 是状态唯一真源。helper scripts 和 hooks 期望它包含类似下面的字段：
+`.harness/status.md` 的 frontmatter 是状态真源。常见字段如下：
 
 ```yaml
 phase: CONTRACTING
@@ -230,11 +198,9 @@ pending_action: evaluator_review
 last_agent: generator
 approval_required: false
 selected_pack: default
-selected_rubric: default-grading
-updated_at: 2026-04-04T12:00:00.000Z
 ```
 
-### 常见 `phase`
+典型 phase：
 
 - `AWAITING_BRIEF_CLARIFICATION`
 - `AWAITING_SPEC_APPROVAL`
@@ -244,7 +210,7 @@ updated_at: 2026-04-04T12:00:00.000Z
 - `FIXING`
 - `DONE`
 
-### 常见 `pending_action`
+典型 pending_action：
 
 - `brief_clarification`
 - `spec_approval`
@@ -256,8 +222,6 @@ updated_at: 2026-04-04T12:00:00.000Z
 - `evaluator_retest`
 - `evaluator_final`
 
-命令层通过 `phase`、`current_sprint`、`total_sprints` 和 `pending_action` 判断当前合法的下一步，防止用户或 subagent 跳过尚未完成的阶段。
-
 ## 仓库结构
 
 ```text
@@ -265,11 +229,16 @@ auto-harness/
 |-- .claude-plugin/
 |   |-- marketplace.json
 |   `-- plugin.json
-|-- LICENSE
 |-- agents/
-|   |-- planner.md
-|   |-- generator.md
-|   `-- evaluator.md
+|   |-- planner-clarify-agent.md
+|   |-- planner-spec-draft-agent.md
+|   |-- generator-draft-contract-agent.md
+|   |-- generator-build-sprint-agent.md
+|   |-- generator-apply-fixes-agent.md
+|   |-- evaluator-review-contract-agent.md
+|   |-- evaluator-write-qa-agent.md
+|   |-- evaluator-write-retest-agent.md
+|   `-- evaluator-write-final-agent.md
 |-- commands/
 |   |-- harness.md
 |   |-- plan.md
@@ -283,146 +252,94 @@ auto-harness/
 |   |-- harness-report.mjs
 |   |-- harness-runtime.mjs
 |   `-- harness-state.mjs
-|-- modules/
-|   |-- protocols/
-|   |-- templates/
-|   |-- rubrics/
-|   |-- clarification/
-|   |-- catalogs/
-|   `-- packs/
+|-- skills/
+|   |-- planner-clarify/
+|   |-- planner-spec-draft/
+|   |-- generator-draft-contract/
+|   |-- generator-build-sprint/
+|   |-- generator-apply-fixes/
+|   |-- evaluator-review-contract/
+|   |-- evaluator-write-qa/
+|   |-- evaluator-write-retest/
+|   `-- evaluator-write-final/
 |-- .mcp.json
-`-- README.md
+|-- LICENSE
+|-- README.md
+`-- README.zh-CN.md
 ```
 
-## 模块库
+## Internal Skills
 
-`modules/` 是共享 operating library。agent kernels 会保持尽量小，把真正的操作规则从这些可复用模块中拉进来。
+每个 subagent 的每个动作都是一个 internal skill，并且 skill 自带 supporting files 与 hooks。
 
-- `modules/protocols/`：角色边界、contracts、文件归属规则
-- `modules/templates/`：intake、spec、contract、report、runtime 的输出模板
-- `modules/rubrics/`：`Evaluator` 使用的评分标准
-- `modules/clarification/`：`Planner` 的澄清问题体系和澄清策略
-- `modules/catalogs/`：架构和技术栈选项目录
-- `modules/packs/`：可复用的偏好包，例如 `default`、`internal-tool`、`mobile-first` 和特定技术栈 pack
+例如：
 
-`Planner` 会收到 protocols、clarification guidance、catalogs、templates 和 packs。`Generator` 会收到 protocols、implementation templates 和 packs。`Evaluator` 会收到 protocols、rubrics、evaluation templates 和 packs。
+- `planner-clarify`：只管 clarification intake
+- `generator-build-sprint`：只管已批准 sprint 的实现
+- `evaluator-write-qa`：只管 QA 执行和 QA report 约束
 
-模块文件会从当前支持的 `modules/` 子目录中自动发现，并按 `applies_to` frontmatter 做过滤。如果你在这些已支持目录下新增一个带正确 `applies_to` 的模块文件，它会自动生效，不需要维护逐文件列表。如果你新增了全新的 bundle 类别或模块目录，还需要同步更新 `scripts/harness-lib.mjs` 中的注入配置。
+这些 skills 的特点：
 
-## Hooks 与恢复机制
+- 不作为用户主入口
+- 不在 `/` 菜单里作为正常工作流展示
+- 由对应 action-specific subagent 预加载
+- 自身携带动作级模板、rubric、pack 内容和 hook 守门逻辑
 
-`hooks/hooks.json` 接入了 3 个生命周期事件：
+## Hooks 与恢复能力
 
-- `SessionStart`：读取 `.harness/status.md`，注入 checkpoint 摘要，并提醒会话恢复而不是重新开始规划
-- `SubagentStart`：注入从 `modules/` 组装出来的角色专属 operating guidance
+插件现在有两层 hooks：
+
+- `hooks/hooks.json` 中的插件级 hooks
+- skill frontmatter 中的 skill-scoped hooks
+
+插件级 hooks：
+
+- `SessionStart`：读取 `.harness/status.md`，注入 checkpoint 摘要，提醒当前 session 应该继续而不是重新规划
 - `PreCompact`：在 compaction 前刷新 `.harness/checkpoints/latest.md`
 
-这也是 Auto-Harness 能够在长会话和上下文压缩下保持韧性的关键。
+skill-scoped hooks 用来执行动作级约束，例如：
+
+- planner skills 只能写 planner-owned `.harness/` 文件
+- generator skills 不能改 `status.md`、review 文件、QA report、retest report、final report
+- evaluator report skills 会在 subagent 结束前强制校验报告结构与一致性
 
 ## Playwright MCP
 
-插件自带一个 `.mcp.json`，通过以下命令启动 Playwright：
+插件内置 `.mcp.json`，通过下面的命令启动 Playwright：
 
 ```text
 npx -y @playwright/mcp@latest
 ```
 
-实际效果上：
+实际分工：
 
-- `Planner` 和 `Generator` 会被隔离在 MCP 驱动的浏览器工作之外
-- `Evaluator` 继承 MCP 能力，可以用它做浏览器 QA
-- `Evaluator` 也可以调用 runtime helper，在 QA 前或 QA 中执行健康检查
+- Planner 和 Generator 不做 MCP 浏览器操作
+- Evaluator 继承 MCP 能力用于浏览器 QA
+- Evaluator 也可以调用 runtime helper 做健康检查
 
 ## Helper Scripts
 
 ### State Helper
 
-读取当前状态文档：
-
-```bash
+```text
 node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-state.mjs" get
-```
-
-打印简短摘要：
-
-```bash
 node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-state.mjs" summary
-```
-
-更新指定的 frontmatter 字段：
-
-```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-state.mjs" set phase=QA pending_action=evaluator_qa
-```
-
-刷新 checkpoint 快照：
-
-```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-state.mjs" set key=value ...
 node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-state.mjs" checkpoint auto
 ```
 
-所有状态命令默认将当前工作目录视为项目根目录。你也可以在 key-value 参数前显式传入项目根目录。
-
 ### Runtime Helper
 
-读取 `.harness/runtime.md`：
-
-```bash
+```text
 node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-runtime.mjs" get
-```
-
-执行 HTTP health check：
-
-```bash
 node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-runtime.mjs" healthcheck
 ```
 
-当前 health check 期望：
+### Report Helper
 
-- `healthcheck_method: http-get`
-- `healthcheck_url`，或者退化使用 `access_url`
-
-### QA Report Helper
-
-校验当前 sprint QA report 的结构：
-
-```bash
+```text
 node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" qa validate
-```
-
-读取已验证的 PASS/FAIL 结果：
-
-```bash
 node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" qa result
+node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" retest validate
+node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" final validate
 ```
-
-这个 helper 会检查 QA report 是否包含以下必需 sections 和表格：
-
-- `Result`
-- `Primary Path Exercise`
-- `Contract Behaviors`
-- `Bugs`
-- `Hard-Fail Gates`
-- `Scorecard`
-- `Verdict`
-
-## 设计规则
-
-- 主线程始终保持 orchestration-only
-- 每次 delegation 都使用 fresh subagent
-- 重要决策写进文件，而不是只留在 chat history 里
-- `Generator` 在 contract 批准前不能开始实现
-- `Evaluator` 根据文件和 runtime 行为做判断，而不是根据乐观解释做判断
-- 恢复时应该从 `.harness/status.md` 继续，而不是重新跑完整 planning loop
-
-## 适用场景
-
-Auto-Harness 最适合这些情况：
-
-- 任务会跨多轮甚至多个 sprint
-- 项目需要持久化的 planning artifacts
-- 你希望实现与 QA 判断之间有明确分离
-- 你预期会话会重启、compaction 或中断
-- 浏览器验证很重要
-
-对于很小的一次性修改，如果单次直接 coding pass 就足够，它通常会显得过重。

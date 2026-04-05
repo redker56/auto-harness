@@ -6,11 +6,10 @@ import https from "node:https";
 export const STATUS_FILE = path.join(".harness", "status.md");
 export const RUNTIME_FILE = path.join(".harness", "runtime.md");
 export const CHECKPOINT_FILE = path.join(".harness", "checkpoints", "latest.md");
-export const MODULES_DIR = "modules";
 
 function stripQuotes(value) {
   if (
-    (value.startsWith("\"") && value.endsWith("\"")) ||
+    (value.startsWith('"') && value.endsWith('"')) ||
     (value.startsWith("'") && value.endsWith("'"))
   ) {
     return value.slice(1, -1);
@@ -113,8 +112,7 @@ export function readStatusDocument(projectRoot) {
   if (!fs.existsSync(filePath)) {
     return null;
   }
-  const document = readMarkdownDocument(filePath);
-  return { path: filePath, ...document };
+  return { path: filePath, ...readMarkdownDocument(filePath) };
 }
 
 export function readRuntimeDocument(projectRoot) {
@@ -122,8 +120,7 @@ export function readRuntimeDocument(projectRoot) {
   if (!fs.existsSync(filePath)) {
     return null;
   }
-  const document = readMarkdownDocument(filePath);
-  return { path: filePath, ...document };
+  return { path: filePath, ...readMarkdownDocument(filePath) };
 }
 
 export function statusSummary(frontmatter) {
@@ -133,13 +130,9 @@ export function statusSummary(frontmatter) {
     `Pending action: ${frontmatter.pending_action ?? "unknown"}`,
     `Last agent: ${frontmatter.last_agent ?? "unknown"}`,
     `Approval required: ${frontmatter.approval_required ?? false}`,
-    `Updated at: ${frontmatter.updated_at ?? "unknown"}`,
   ];
   if (frontmatter.selected_pack) {
     lines.splice(4, 0, `Selected pack: ${frontmatter.selected_pack}`);
-  }
-  if (frontmatter.selected_rubric) {
-    lines.splice(frontmatter.selected_pack ? 5 : 4, 0, `Selected rubric: ${frontmatter.selected_rubric}`);
   }
   return lines.join("\n");
 }
@@ -224,194 +217,6 @@ export function resolvePluginRoot(explicitRoot) {
     return path.resolve(explicitRoot);
   }
   return path.resolve(import.meta.dirname, "..");
-}
-
-export function readModuleDocument(pluginRoot, relativePath) {
-  const filePath = path.join(pluginRoot, MODULES_DIR, relativePath);
-  const document = readOptionalMarkdownDocument(filePath);
-  if (!document) {
-    return null;
-  }
-  return { path: filePath, ...document };
-}
-
-const SUBAGENT_BUNDLE_SPECS = {
-  planner: [
-    {
-      name: "planner-protocols",
-      directories: ["protocols"],
-    },
-    {
-      name: "planner-clarification",
-      directories: ["clarification"],
-    },
-    {
-      name: "planner-catalogs",
-      directories: ["catalogs"],
-    },
-    {
-      name: "planner-templates",
-      directories: ["templates"],
-    },
-    {
-      name: "pack-library",
-      directories: ["packs"],
-    },
-  ],
-  generator: [
-    {
-      name: "generator-policy",
-      directories: ["protocols", "templates"],
-    },
-    {
-      name: "pack-library",
-      directories: ["packs"],
-    },
-  ],
-  evaluator: [
-    {
-      name: "evaluator-policy",
-      directories: ["protocols", "templates"],
-    },
-    {
-      name: "rubric-library",
-      directories: ["rubrics"],
-    },
-    {
-      name: "pack-library",
-      directories: ["packs"],
-    },
-  ],
-};
-
-function normalizeFrontmatterList(value) {
-  if (Array.isArray(value)) {
-    return value.map((entry) => String(entry).trim()).filter(Boolean);
-  }
-  const raw = String(value ?? "").trim();
-  if (!raw) {
-    return [];
-  }
-  if (raw.startsWith("[") && raw.endsWith("]")) {
-    const inner = raw.slice(1, -1).trim();
-    if (!inner) {
-      return [];
-    }
-    return inner
-      .split(",")
-      .map((entry) => stripQuotes(entry.trim()))
-      .filter(Boolean);
-  }
-  return [stripQuotes(raw)];
-}
-
-function moduleAppliesToRole(document, role) {
-  const appliesTo = normalizeFrontmatterList(document.frontmatter.applies_to);
-  if (appliesTo.length === 0) {
-    return true;
-  }
-  return appliesTo.includes(role);
-}
-
-function listMarkdownRelativePaths(rootDir, currentDir = rootDir) {
-  if (!fs.existsSync(currentDir)) {
-    return [];
-  }
-
-  const entries = fs
-    .readdirSync(currentDir, { withFileTypes: true })
-    .sort((left, right) => left.name.localeCompare(right.name));
-  const results = [];
-
-  for (const entry of entries) {
-    const fullPath = path.join(currentDir, entry.name);
-    if (entry.isDirectory()) {
-      results.push(...listMarkdownRelativePaths(rootDir, fullPath));
-      continue;
-    }
-    if (entry.isFile() && entry.name.endsWith(".md")) {
-      results.push(path.relative(rootDir, fullPath).replace(/\\/g, "/"));
-    }
-  }
-
-  return results;
-}
-
-function collectBundleDocuments(pluginRoot, directories, role) {
-  const results = [];
-
-  for (const directory of directories) {
-    const absoluteDir = path.join(pluginRoot, MODULES_DIR, directory);
-    const relativePaths = listMarkdownRelativePaths(absoluteDir);
-    for (const relativePath of relativePaths) {
-      const moduleRelativePath = `${directory}/${relativePath}`.replace(/\\/g, "/");
-      const document = readModuleDocument(pluginRoot, moduleRelativePath);
-      if (!document || !moduleAppliesToRole(document, role)) {
-        continue;
-      }
-      results.push(document);
-    }
-  }
-
-  return results;
-}
-
-function normalizeAgentType(agentType) {
-  const raw = String(agentType ?? "").trim();
-  if (!raw) {
-    return "";
-  }
-  if (raw.includes(":")) {
-    return raw.split(":").pop();
-  }
-  return raw;
-}
-
-function formatBundleTitle(name) {
-  const titles = {
-    "planner-protocols": "Planning Protocols",
-    "planner-clarification": "Clarification Guidance",
-    "planner-catalogs": "Architecture And Stack Catalogs",
-    "planner-templates": "Planning Templates",
-    "generator-policy": "Generator Guidance",
-    "evaluator-policy": "Evaluator Guidance",
-    "rubric-library": "Rubric Guidance",
-    "pack-library": "Pack Guidance",
-  };
-  return titles[name] ?? name;
-}
-
-export function buildSubagentPolicyContext(pluginRoot, agentType) {
-  const normalizedType = normalizeAgentType(agentType);
-  const bundles = SUBAGENT_BUNDLE_SPECS[normalizedType];
-  if (!bundles?.length) {
-    return null;
-  }
-
-  const sections = [
-    "[Auto-Harness Operating Guide]",
-    `Role: ${normalizedType}`,
-    "Use the guidance below as authoritative context for this run.",
-  ];
-
-  for (const bundle of bundles) {
-    const documents = collectBundleDocuments(
-      pluginRoot,
-      bundle.directories,
-      normalizedType,
-    );
-    if (documents.length === 0) {
-      continue;
-    }
-    sections.push("");
-    sections.push(`## ${formatBundleTitle(bundle.name)}`);
-    for (const document of documents) {
-      sections.push("");
-      sections.push(document.body.trim());
-    }
-  }
-
-  return sections.join("\n").trim();
 }
 
 export function httpGet(url, timeoutMs = 5000) {

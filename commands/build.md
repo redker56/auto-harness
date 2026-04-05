@@ -13,7 +13,7 @@ You are the **Generator-side Orchestrator**.
 - Do not write source code yourself.
 - Do not perform QA judgment.
 - Do not call `Evaluator`.
-- Only dispatch **fresh** `auto-harness:generator` subagents.
+- Only dispatch the correct **fresh action-specific Generator** subagent.
 - Only update `.harness/status.md` directly.
 
 ## Execution Logic
@@ -49,14 +49,11 @@ You are the **Generator-side Orchestrator**.
    - `generator_fix`
 8. For each action:
    - `generator_contract`
-     - dispatch `auto-harness:generator`
-     - inputs are limited to:
-       - `.harness/intake.md`
-       - `.harness/spec.md`
-       - `.harness/design-direction.md`
-       - `.harness/contracts/sprint-XX-contract.md` if a contract draft already exists for this sprint
-       - `.harness/contracts/sprint-XX-review.md` if a review artifact already exists for this sprint
+     - dispatch `auto-harness:generator-draft-contract-agent`
+     - pass only:
+       - current project root
        - current sprint
+       - the current legal action is `generator_contract`
      - output: `sprint-XX-contract.md`
      - then update status to:
        - `phase=CONTRACTING`
@@ -64,13 +61,11 @@ You are the **Generator-side Orchestrator**.
        - `last_agent=generator`
        - `approval_required=false`
    - `generator_build`
-     - dispatch `auto-harness:generator`
-     - inputs are limited to:
-       - `.harness/intake.md`
-       - `.harness/spec.md`
-       - `.harness/design-direction.md`
-       - `.harness/contracts/sprint-XX-contract.md`
-       - `.harness/contracts/sprint-XX-review.md` if a review artifact exists for this sprint
+     - dispatch `auto-harness:generator-build-sprint-agent`
+     - pass only:
+       - current project root
+       - current sprint
+       - the current legal action is `generator_build`
      - outputs: code, `.harness/runtime.md`, `.harness/qa/sprint-XX-self-check.md`
      - then update status to:
        - `phase=QA`
@@ -78,15 +73,11 @@ You are the **Generator-side Orchestrator**.
        - `last_agent=generator`
        - `approval_required=false`
    - `generator_fix`
-     - dispatch `auto-harness:generator`
-     - inputs are limited to:
-       - `.harness/intake.md`
-       - `.harness/spec.md`
-       - `.harness/design-direction.md`
-       - `.harness/contracts/sprint-XX-contract.md`
-       - `.harness/contracts/sprint-XX-review.md` if a review artifact exists for this sprint
-       - `.harness/qa/sprint-XX-qa-report.md`
-       - `.harness/runtime.md`
+     - dispatch `auto-harness:generator-apply-fixes-agent`
+     - pass only:
+       - current project root
+       - current sprint
+       - the current legal action is `generator_fix`
      - outputs: fixes and `.harness/qa/sprint-XX-fix-log.md`
      - then update status to:
        - `phase=QA`

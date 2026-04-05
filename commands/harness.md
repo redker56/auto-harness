@@ -27,12 +27,12 @@ You do **not** do any of these things:
 
 ## Hard Rules
 
-1. Every delegation must use a **fresh** `auto-harness:planner`, `auto-harness:generator`, or `auto-harness:evaluator` subagent.
+1. Every delegation must use the correct **fresh action-specific** Auto-Harness subagent for the current legal action.
 2. The main thread may only directly update:
    - `.harness/status.md`
    - `.harness/checkpoints/latest.md`
 3. The main thread must not modify application source code.
-4. Do not paste long file contents into subagent prompts. Name the files the subagent must read from disk.
+4. Do not paste long file contents into subagent prompts. Pass the current legal action, current sprint when relevant, project root, and any dynamic user reply or rewrite reason; let the subagent read required `.harness` artifacts from the project via its routed skill.
 5. The pipeline is:
    - brief
    - clarification
@@ -41,7 +41,7 @@ You do **not** do any of these things:
    - sprint loop
    - final report
 6. `Generator` must draft a contract before implementation. `Evaluator` must approve the contract before coding begins.
-7. `Evaluator` must not receive Generator chat history. Only pass the named files and the current task.
+7. `Evaluator` must not receive Generator chat history. Pass only the current task, current legal action, sprint, project root, and any dynamic rewrite reason.
 8. When clarification or approval is required, read the relevant `.harness/*.md` artifact and continue the conversation directly in chat. The file remains the durable log, but the interaction happens through Orchestrator.
 
 ## Execution Loop
@@ -94,10 +94,11 @@ When working with sprint QA artifacts, also use:
 
 - Treat the current working directory as the project root.
 - If `$ARGUMENTS` is empty, ask the user for a 1-4 sentence product brief and stop.
-- Dispatch a **fresh** `auto-harness:planner` subagent in **Clarification Mode**.
+- Dispatch a **fresh** `auto-harness:planner-clarify-agent` subagent.
 - Pass only:
   - the user's original brief
   - the current project root
+  - the current legal action is `brief_clarification`
   - the required outputs:
     - `.harness/intake.md`
     - `.harness/status.md`
@@ -138,11 +139,11 @@ When working with sprint QA artifacts, also use:
 - If the user's current message **does** contain clarification answers:
   - do **not** infer answers for any still-unanswered clarification item
   - if any required clarification item remains unresolved, restate it directly in chat and stop
-  - dispatch a **fresh** `auto-harness:planner` subagent in **Spec Draft Mode**
+  - dispatch a **fresh** `auto-harness:planner-spec-draft-agent` subagent
   - pass only:
-    - `.harness/intake.md`
     - the user's clarification answers from the current message
     - the current project root
+    - the current legal action is `spec_draft`
     - the required outputs:
       - `.harness/intake.md`
       - `.harness/spec.md`
@@ -172,15 +173,12 @@ When working with sprint QA artifacts, also use:
 
 #### If `phase=AWAITING_SPEC_APPROVAL`
 
-- Read `.harness/spec.md` and `.harness/design-direction.md`.
 - If the user's current message contains concrete spec revisions:
-  - dispatch a **fresh** `auto-harness:planner` subagent in **Spec Draft Mode**
+  - dispatch a **fresh** `auto-harness:planner-spec-draft-agent` subagent
   - pass only:
-    - `.harness/intake.md`
-    - `.harness/spec.md`
-    - `.harness/design-direction.md`
     - the user's revision requests from the current message
     - the current project root
+    - the current legal action is `spec_draft`
     - the required outputs:
       - `.harness/intake.md`
       - `.harness/spec.md`
@@ -205,6 +203,7 @@ When working with sprint QA artifacts, also use:
     - any major open tradeoffs
   - ask for direct approval or more concrete revisions inline
 - Otherwise, if the user's current message does **not** clearly confirm the spec:
+  - read the current `.harness/spec.md` and `.harness/design-direction.md`
   - briefly restate the current spec summary, including the current design direction summary
   - ask for direct approval or concrete revisions in chat
   - do **not** require the user to inspect the file manually before replying
@@ -230,31 +229,26 @@ If `current_sprint > total_sprints`, go straight to final report mode.
 
 ### When `pending_action=generator_contract`
 
-- Dispatch a **fresh** `auto-harness:generator` subagent.
+- Dispatch a **fresh** `auto-harness:generator-draft-contract-agent` subagent.
 - Pass only:
-  - `.harness/intake.md`
-  - `.harness/spec.md`
-  - `.harness/design-direction.md`
-  - `.harness/contracts/sprint-XX-contract.md` if a contract draft already exists for this sprint
-  - `.harness/contracts/sprint-XX-review.md` if a review artifact already exists for this sprint
+  - the current project root
   - the current sprint number
-  - the instruction that this is **contract-only mode**
+  - the current legal action is `generator_contract`
 - Expected output:
   - `.harness/contracts/sprint-XX-contract.md`
 - Then update status to:
   - `phase=CONTRACTING`
   - `pending_action=evaluator_review`
   - `last_agent=generator`
+  - `approval_required=false`
 
 ### When `pending_action=evaluator_review`
 
-- Dispatch a **fresh** `auto-harness:evaluator` subagent.
+- Dispatch a **fresh** `auto-harness:evaluator-review-contract-agent` subagent.
 - Pass only:
-  - `.harness/intake.md`
-  - `.harness/spec.md`
-  - `.harness/contracts/sprint-XX-contract.md`
+  - the current project root
   - the current sprint number
-  - the instruction that this is **contract review mode**
+  - the current legal action is `evaluator_review`
 - Expected output:
   - `.harness/contracts/sprint-XX-review.md`
 - Read the review result:
@@ -262,23 +256,21 @@ If `current_sprint > total_sprints`, go straight to final report mode.
     - `phase=CONTRACTING`
     - `pending_action=generator_contract`
     - `last_agent=evaluator`
+    - `approval_required=false`
     - keep the current review artifact so the next Generator run can revise the contract against it
   - if it is `APPROVED`, update status to:
     - `phase=BUILDING`
     - `pending_action=generator_build`
     - `last_agent=evaluator`
+    - `approval_required=false`
 
 ### When `pending_action=generator_build`
 
-- Dispatch a **fresh** `auto-harness:generator` subagent.
+- Dispatch a **fresh** `auto-harness:generator-build-sprint-agent` subagent.
 - Pass only:
-  - `.harness/intake.md`
-  - `.harness/spec.md`
-  - `.harness/design-direction.md`
-  - `.harness/contracts/sprint-XX-contract.md`
-  - `.harness/contracts/sprint-XX-review.md` if a review artifact exists for this sprint
+  - the current project root
   - the current sprint number
-  - the instruction that this is **build mode**
+  - the current legal action is `generator_build`
 - Expected output:
   - application code
   - `.harness/runtime.md`
@@ -287,28 +279,23 @@ If `current_sprint > total_sprints`, go straight to final report mode.
   - `phase=QA`
   - `pending_action=evaluator_qa`
   - `last_agent=generator`
+  - `approval_required=false`
 
 ### When `pending_action=evaluator_qa`
 
-- Dispatch a **fresh** `auto-harness:evaluator` subagent.
+- Dispatch a **fresh** `auto-harness:evaluator-write-qa-agent` subagent.
 - Pass only:
-  - `.harness/intake.md`
-  - `.harness/spec.md`
-  - `.harness/design-direction.md`
-  - `.harness/contracts/sprint-XX-contract.md`
-  - `.harness/contracts/sprint-XX-review.md` if a review artifact exists for this sprint
-  - `.harness/qa/sprint-XX-self-check.md`
-  - `.harness/runtime.md`
+  - the current project root
   - the current sprint number
-  - the instruction that this is **QA mode**
+  - the current legal action is `evaluator_qa`
 - Expected output:
   - `.harness/qa/sprint-XX-qa-report.md`
 - Validate the QA report first with:
   - `node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" qa validate`
 - If validation fails:
   - do not advance state
-  - dispatch a **fresh** `auto-harness:evaluator` subagent in **QA mode** to rewrite the current `.harness/qa/sprint-XX-qa-report.md`
-  - pass the same QA inputs again, plus the instruction that the previous QA report failed structural validation and must be fully rewritten to match the template, reflect the active rubric, and preserve any still-valid findings with clear evidence rather than only patching structure
+  - dispatch a **fresh** `auto-harness:evaluator-write-qa-agent` subagent to rewrite the current `.harness/qa/sprint-XX-qa-report.md`
+- pass the same QA meta-state again, plus the instruction that the previous QA report failed structural validation and must be fully recomputed from evidence to satisfy the template/schema and the bundled rubric files together, while preserving any still-valid findings with clear evidence rather than only patching structure
   - validate the rewritten report again with `node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-report.mjs" qa validate`
   - if validation still fails, stop, do not advance state, and tell the user the QA report is structurally invalid and must be regenerated to match the template
 - If validation passes, read the QA result with:
@@ -318,30 +305,27 @@ If `current_sprint > total_sprints`, go straight to final report mode.
     - `phase=FIXING`
     - `pending_action=generator_fix`
     - `last_agent=evaluator`
+    - `approval_required=false`
   - if `PASS` and another sprint remains, update status to:
     - `phase=CONTRACTING`
     - `current_sprint=<next sprint>`
     - `pending_action=generator_contract`
     - `last_agent=evaluator`
+    - `approval_required=false`
   - if `PASS` and this was the last sprint, update status to:
     - `phase=QA`
     - `pending_action=evaluator_final`
     - `last_agent=evaluator`
+    - `approval_required=false`
 - After any of the above status updates, re-read `.harness/status.md` and continue the execution loop immediately.
 
 ### When `pending_action=generator_fix`
 
-- Dispatch a **fresh** `auto-harness:generator` subagent.
+- Dispatch a **fresh** `auto-harness:generator-apply-fixes-agent` subagent.
 - Pass only:
-  - `.harness/intake.md`
-  - `.harness/spec.md`
-  - `.harness/design-direction.md`
-  - `.harness/contracts/sprint-XX-contract.md`
-  - `.harness/contracts/sprint-XX-review.md` if a review artifact exists for this sprint
-  - `.harness/qa/sprint-XX-qa-report.md`
-  - `.harness/runtime.md`
+  - the current project root
   - the current sprint number
-  - the instruction that this is **fix mode**
+  - the current legal action is `generator_fix`
 - Expected output:
   - code fixes
   - `.harness/qa/sprint-XX-fix-log.md`
@@ -349,21 +333,15 @@ If `current_sprint > total_sprints`, go straight to final report mode.
   - `phase=QA`
   - `pending_action=evaluator_retest`
   - `last_agent=generator`
+  - `approval_required=false`
 
 ### When `pending_action=evaluator_retest`
 
-- Dispatch a **fresh** `auto-harness:evaluator` subagent.
+- Dispatch a **fresh** `auto-harness:evaluator-write-retest-agent` subagent.
 - Pass only:
-  - `.harness/intake.md`
-  - `.harness/spec.md`
-  - `.harness/design-direction.md`
-  - `.harness/contracts/sprint-XX-contract.md`
-  - `.harness/contracts/sprint-XX-review.md` if a review artifact exists for this sprint
-  - `.harness/qa/sprint-XX-qa-report.md`
-  - `.harness/qa/sprint-XX-fix-log.md`
-  - `.harness/runtime.md`
+  - the current project root
   - the current sprint number
-  - the instruction that this is **retest mode**
+  - the current legal action is `evaluator_retest`
 - Expected output:
   - `.harness/qa/sprint-XX-retest.md`
 - Read the retest result:
@@ -371,28 +349,28 @@ If `current_sprint > total_sprints`, go straight to final report mode.
     - `phase=FIXING`
     - `pending_action=generator_fix`
     - `last_agent=evaluator`
+    - `approval_required=false`
   - if `PASS` and another sprint remains, update status to:
     - `phase=CONTRACTING`
     - `current_sprint=<next sprint>`
     - `pending_action=generator_contract`
     - `last_agent=evaluator`
+    - `approval_required=false`
   - if `PASS` and this was the last sprint, update status to:
     - `phase=QA`
     - `pending_action=evaluator_final`
     - `last_agent=evaluator`
+    - `approval_required=false`
 - After any of the above status updates, re-read `.harness/status.md` and continue the execution loop immediately.
 
 ## Phase 2: Final Report
 
 ### When `pending_action=evaluator_final`
 
-- Dispatch a **fresh** `auto-harness:evaluator` subagent.
+- Dispatch a **fresh** `auto-harness:evaluator-write-final-agent` subagent.
 - Pass only:
-  - `.harness/intake.md`
-  - `.harness/spec.md`
-  - all sprint QA reports
-  - all sprint retest reports
-  - the instruction that this is **final report mode**
+  - the current project root
+  - the current legal action is `evaluator_final`
 - Expected output:
   - `.harness/final/qa-final-report.md`
 - Then update status to:

@@ -1,10 +1,8 @@
 #!/usr/bin/env node
 import process from "node:process";
 import {
-  buildSubagentPolicyContext,
   readCheckpoint,
   readStatusDocument,
-  resolvePluginRoot,
   statusSummary,
   writeCheckpoint,
 } from "./harness-lib.mjs";
@@ -42,28 +40,7 @@ try {
 }
 
 const projectRoot = payload.cwd || process.cwd();
-const pluginRoot = resolvePluginRoot(process.env.CLAUDE_PLUGIN_ROOT);
 const status = readStatusDocument(projectRoot);
-
-if (mode === "subagent-start") {
-  const additionalContext = buildSubagentPolicyContext(
-    pluginRoot,
-    payload.agent_type,
-  );
-
-  if (!additionalContext) {
-    printJson({});
-    process.exit(0);
-  }
-
-  printJson({
-    hookSpecificOutput: {
-      hookEventName: "SubagentStart",
-      additionalContext,
-    },
-  });
-  process.exit(0);
-}
 
 if (!status) {
   printJson({});

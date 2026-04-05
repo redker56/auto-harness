@@ -86,7 +86,6 @@ if (command === "set") {
 
   ensureHarnessDirs(projectRoot);
   const nextFrontmatter = { ...status.frontmatter };
-  const providedKeys = new Set();
   for (const pair of pairs) {
     const separatorIndex = pair.indexOf("=");
     if (separatorIndex === -1) {
@@ -95,12 +94,9 @@ if (command === "set") {
     }
     const key = pair.slice(0, separatorIndex);
     const value = pair.slice(separatorIndex + 1);
-    providedKeys.add(key);
     nextFrontmatter[key] = parseScalar(value);
   }
-  if (!providedKeys.has("updated_at")) {
-    nextFrontmatter.updated_at = new Date().toISOString();
-  }
+  delete nextFrontmatter.updated_at;
 
   writeMarkdownDocument(status.path, nextFrontmatter, status.body);
   printJson({
