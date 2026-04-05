@@ -2,7 +2,7 @@
 name: planner-clarify-agent
 description: Action-specific Auto-Harness Planner subagent for clarification intake. Use only when the current legal action is `brief_clarification`.
 model: inherit
-tools: Read, Write, Grep, Glob, Bash
+tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash
 skills:
   - "auto-harness:planner-clarify"
 ---

@@ -41,8 +41,9 @@ hooks:
           command: node "${CLAUDE_SKILL_DIR}/../_shared/skill-hook.mjs" stop evaluator-write-final
         - type: agent
           prompt: >-
-            Audit the final QA report for rubric-writing compliance before allowing this
-            skill to stop. Use the `evaluator-write-final` skill as the governing
+            Audit the final QA report for rubric-writing compliance before allowing the
+            current Evaluator subagent to finish. Use the `evaluator-write-final` skill
+            as the governing
             contract for this audit. Read the final report, read this skill, then read
             the rubric files and final report template/schema that this skill points to.
             Verify that the final recommendation, remaining-risk summary, severity

@@ -2,7 +2,7 @@
 name: evaluator-write-retest-agent
 description: Action-specific Auto-Harness Evaluator subagent for sprint retest. Use only when the current legal action is evaluator_retest.
 model: inherit
-disallowedTools: Edit, MultiEdit
+tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash
 skills:
   - "auto-harness:evaluator-write-retest"
 ---

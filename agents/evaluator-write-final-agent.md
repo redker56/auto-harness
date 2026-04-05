@@ -2,7 +2,7 @@
 name: evaluator-write-final-agent
 description: Action-specific Auto-Harness Evaluator subagent for final report synthesis. Use only when the current legal action is evaluator_final.
 model: inherit
-disallowedTools: Edit, MultiEdit
+tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash
 skills:
   - "auto-harness:evaluator-write-final"
 ---

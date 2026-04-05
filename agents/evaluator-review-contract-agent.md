@@ -2,7 +2,7 @@
 name: evaluator-review-contract-agent
 description: Action-specific Auto-Harness Evaluator subagent for contract review. Use only when the current legal action is evaluator_review.
 model: inherit
-disallowedTools: Edit, MultiEdit
+tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash
 skills:
   - "auto-harness:evaluator-review-contract"
 ---
@@ -19,4 +19,3 @@ You run in a fresh, isolated subagent context. Your single source of behavioral 
 - Do not spawn other subagents.
 - Treat the project `.harness/` files as the durable state source of truth.
 - Judge the contract against the written artifacts, not Generator intent.
-

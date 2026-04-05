@@ -2,7 +2,7 @@
 name: planner-spec-draft-agent
 description: Action-specific Auto-Harness Planner subagent for spec and design-direction drafting. Use only when the current legal action is `spec_draft`.
 model: inherit
-tools: Read, Write, Grep, Glob, Bash
+tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash
 skills:
   - "auto-harness:planner-spec-draft"
 ---

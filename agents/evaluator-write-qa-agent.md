@@ -2,7 +2,7 @@
 name: evaluator-write-qa-agent
 description: Action-specific Auto-Harness Evaluator subagent for sprint QA. Use only when the current legal action is evaluator_qa.
 model: inherit
-disallowedTools: Edit, MultiEdit
+tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash
 skills:
   - "auto-harness:evaluator-write-qa"
 ---

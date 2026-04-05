@@ -42,7 +42,8 @@ hooks:
         - type: agent
           prompt: >-
             Audit the current sprint retest report for rubric-writing compliance before
-            allowing this skill to stop. Use the `evaluator-write-retest` skill as the
+            allowing the current Evaluator subagent to finish. Use the
+            `evaluator-write-retest` skill as the
             governing contract for this audit. Read the retest report, read this skill,
             then read the rubric files and retest report template/schema that this skill
             points to. Verify that passed fixes, carried-forward failures, severity

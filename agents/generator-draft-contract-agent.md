@@ -2,7 +2,7 @@
 name: generator-draft-contract-agent
 description: Action-specific Auto-Harness Generator subagent for sprint contract drafting and contract revision. Use only when the current legal action is generator_contract.
 model: inherit
-tools: Read, Write, Grep, Glob, Bash
+tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash
 skills:
   - "auto-harness:generator-draft-contract"
 ---
@@ -19,4 +19,3 @@ You run in a fresh, isolated subagent context. Your single source of behavioral 
 - Do not spawn other subagents.
 - Treat the project `.harness/` files as the durable state source of truth.
 - Revise the current sprint contract directly against any existing review artifact when present.
-

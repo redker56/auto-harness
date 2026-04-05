@@ -42,7 +42,8 @@ hooks:
         - type: agent
           prompt: >-
             Audit the current sprint QA report for rubric-writing compliance before
-            allowing this skill to stop. Use the `evaluator-write-qa` skill as the
+            allowing the current Evaluator subagent to finish. Use the
+            `evaluator-write-qa` skill as the
             governing contract for this audit. Read the QA report, read this skill, then
             read the rubric files and QA report template/schema that this skill points to.
             Verify that the report's sections, scorecard rows, hard-fail treatment,
