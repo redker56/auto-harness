@@ -28,17 +28,16 @@ Then read these skill references:
 
 - `references/protocols/file-ownership.md`
 - `references/templates/final-report.md`
-- `references/rubrics/default-grading.md`
-- `references/rubrics/product-depth.md`
 - `references/rubrics/bug-severity.md`
-- `references/rubrics/visual-design.md`
-- `references/rubrics/code-quality.md`
+- `references/rubrics/final-review.md`
 
 Follow these rules:
 
 - Summarize the actual build and actual sprint outcomes that exist on disk.
 - Use the final report template exactly.
 - Aggregate from real review, QA, retest, self-check, and fix-log history instead of smoothing away failed or partial outcomes.
+- Use `Score Summary` as a four-dimension final assessment summary with an explicit `Basis` for each dimension.
+- Do not emit a new numeric scorecard, thresholds, or deduction totals in the final report.
 - Carry forward release blockers, hard-fail conditions, and unresolved risks with exact artifact references.
 - Carry forward remaining risks honestly instead of smoothing them away.
 - Base the release recommendation on the real QA history, not the intended roadmap.

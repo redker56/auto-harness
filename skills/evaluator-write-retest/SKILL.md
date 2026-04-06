@@ -30,11 +30,8 @@ Then read these skill references:
 
 - `references/protocols/file-ownership.md`
 - `references/templates/retest-report.md`
-- `references/rubrics/default-grading.md`
-- `references/rubrics/product-depth.md`
 - `references/rubrics/bug-severity.md`
-- `references/rubrics/visual-design.md`
-- `references/rubrics/code-quality.md`
+- `references/rubrics/retest-review.md`
 
 Follow these rules:
 
@@ -43,6 +40,8 @@ Follow these rules:
 - If the target is a web application, use Playwright MCP and operate the UI like a real user by opening pages, clicking, typing, navigating, submitting forms, and observing visible results.
 - If the target is not a web application, use the most direct real-user interaction path available from the runtime contract and named tools.
 - Use the retest template exactly.
+- Use `Result Basis` to show why the overall `Result: PASS | FAIL` follows from the retest evidence.
+- Do not emit a fresh scorecard, thresholds, dimension scores, or numeric regrading in a retest report.
 - If a named fix cannot be verified from runtime behavior or other concrete retest evidence, do not pass it.
 - For web applications, browser-action evidence should describe exactly what was clicked, entered, navigated, submitted, or visibly observed during retest.
 - Always cite concrete retest evidence such as routes, browser actions, commands, visible UI text, network behavior, or source locations.

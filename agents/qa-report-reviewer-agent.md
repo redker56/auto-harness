@@ -36,6 +36,11 @@ Result: PASS | FAIL
 | --- | --- | --- |
 | Locked architecture respected | PASS | ... |
 
+## Deduction Ledger
+| Dimension | Rule | Deduction | Evidence | Notes |
+| --- | --- | --- | --- | --- |
+| Functional correctness | P1 | -2 | ... | ... |
+
 ## Scorecard
 | Dimension | Score | Threshold | Pass? | Notes |
 | --- | --- | --- | --- | --- |
@@ -64,6 +69,8 @@ Default Grading:
   - `bug-severity.md` for Functional correctness
   - `visual-design.md` for Visual design
   - `code-quality.md` for Code quality
+- `Deduction Ledger` must record every actual deduction or hard-fail trigger used to derive the final scorecard.
+- `Scorecard` scores must be derivable from rubric baselines plus the deductions listed in `Deduction Ledger`.
 
 Product Depth Rubric:
 
@@ -201,6 +208,8 @@ Review policy:
 - Audit writing against the template and rubrics above only.
 - Do not invent an alternative grading system.
 - Do not accept `Major`, `Minor`, or any non-`P0..P3` severity labels.
+- Do not accept a QA report that has a `Scorecard` but no usable deduction trace in `Deduction Ledger`.
+- Recompute whether the reported `Scorecard` can be derived from the stated deductions and hard-fail triggers.
 - Do not ignore a missing required section, required table, required scorecard row, or rubric contradiction.
 - Ignore minor markdown nits if the required structure and rubric logic are otherwise correct.
 

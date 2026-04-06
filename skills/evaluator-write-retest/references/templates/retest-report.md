@@ -22,6 +22,13 @@ Result: PASS | FAIL
 | Gate | Status | Evidence |
 | --- | --- | --- |
 
+## Result Basis
+| Basis | Status | Evidence | Notes |
+| --- | --- | --- | --- |
+| Named fixes retested | PASS | ... | ... |
+| Remaining unresolved issues | PASS | ... | ... |
+| Hard-fail gates | PASS | ... | ... |
+
 ## Verdict
 - ...
 ```
@@ -30,4 +37,5 @@ Guidance:
 
 - Retest only the named fixes and any tightly related regression surface.
 - Do not silently upgrade unresolved issues to passed status.
+- Do not include a four-dimension scorecard, thresholds, or numeric regrading in a retest report.
 

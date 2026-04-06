@@ -30,31 +30,45 @@ Result: PASS | FAIL
 | --- | --- | --- | --- |
 
 ## Score Summary
-| Dimension | Final Assessment | Notes |
-| --- | --- | --- |
+| Dimension | Final Assessment | Basis | Notes |
+| --- | --- | --- | --- |
+| Product depth | PASS | ... | ... |
+| Functional correctness | PASS | ... | ... |
+| Visual design | PASS | ... | ... |
+| Code quality | PASS | ... | ... |
 
 ## Release Recommendation
 - ...
 ```
 
-Final-report-specific template guidance:
+Enforce this bug-severity vocabulary exactly:
 
-- Summarize the actual build that exists, not the intended roadmap.
-- Highlight residual risks that a user or maintainer should know before release.
+- `P0`: core behavior is broken, data is corrupted, or the app is effectively unusable
+- `P1`: important behavior is broken, unreliable, or seriously misleading; workaround may exist
+- `P2`: noticeable defect in quality, UX, or non-core behavior that does not block core use
+- `P3`: minor polish issue with limited user impact
 
-Enforce this final review contract exactly:
+Enforce this final review rubric exactly:
 
-- The final report is a summary of actual sprint history and shipped state. It is not a fresh four-dimension re-grade of the whole project.
-- `## Sprint Outcomes` must accurately reflect the real outcomes already recorded in prior sprint QA and retest reports.
-- `## Remaining Issues` must carry forward unresolved issues honestly. Severity vocabulary is exactly `P0`, `P1`, `P2`, `P3`. Do not accept `Major`, `Minor`, or any alternative labels.
-- `## Score Summary` must stay aligned with the four dimensions `Product depth`, `Functional correctness`, `Visual design`, and `Code quality`, but the table is a final assessment summary, not a new numeric scorecard.
+- The final report is a summary of actual sprint history and current shipped state. It is not a fresh sprint-level numeric regrade.
+- `## Sprint Outcomes` must match the actual sprint QA and retest reports that exist on disk.
+- `## Remaining Issues` must honestly preserve unresolved issues from prior history when they still apply.
+- Severity vocabulary in `## Remaining Issues` is exactly `P0`, `P1`, `P2`, `P3`. Do not accept `Major`, `Minor`, or any alternative labels.
+- `## Score Summary` must contain exactly these dimensions:
+  - `Product depth`
+  - `Functional correctness`
+  - `Visual design`
+  - `Code quality`
+- Each `## Score Summary` row must include a concrete `Basis`.
+- `## Score Summary` is a final assessment summary, not a new numeric scorecard. Do not allow thresholds, deduction totals, or recomputed numeric scores.
 - `## Release Recommendation` must match the accumulated sprint outcomes, remaining issues, and stated residual risks.
-- `Result: PASS | FAIL` must align with the final recommendation and the summarized evidence. Do not allow an overall pass that contradicts unresolved blockers or carried-forward hard failures.
+- `Result: PASS | FAIL` must align with the final recommendation and summarized evidence.
+- Do not allow an overall pass when unresolved blockers, carried-forward hard failures, or unresolved `P0` issues remain.
 
 Review policy:
 
-- Audit writing against the template and final review contract above only.
-- Do not invent an alternative grading system.
+- Audit writing against the template and final review rubric above only.
+- Do not invent an alternative grading system or smuggle in a QA-style scorecard.
 - Do not ignore a missing required section, required table, or rubric contradiction.
 - Ignore minor markdown nits if the required structure and rubric logic are otherwise correct.
 

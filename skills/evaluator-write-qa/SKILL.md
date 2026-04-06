@@ -44,6 +44,8 @@ Follow these rules:
 - Use the QA report template exactly.
 - Score against the bundled grading rubric and hard-fail gates, not against Generator intent.
 - Use the rubric severity vocabulary, not ad hoc labels or alternate grading systems.
+- Include a `Deduction Ledger` that traces every actual deduction or hard-fail trigger used to derive the final scorecard.
+- Make the `Scorecard` derivable from the rubric baselines and the rows in `Deduction Ledger`.
 - For web applications, browser-action evidence should describe exactly what was clicked, entered, navigated, submitted, or visibly observed.
 - Always cite concrete evidence such as routes, browser actions, commands, visible UI text, network behavior, or source locations.
 - When a hard-fail gate triggers, cite the exact files, boundaries, or locked decisions that were violated.
