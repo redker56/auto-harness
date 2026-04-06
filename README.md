@@ -1,39 +1,108 @@
-﻿# Auto-Harness
+# Auto-Harness
 
 [English](README.md) | [中文](README.zh-CN.md)
 
 This plugin is based on Anthropic's article, [Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps).
 
-Auto-Harness is a Claude Code plugin for long-running application work. It turns planning, implementation, QA, fix loops, and resume/recovery into a file-backed workflow under `.harness/` while keeping the main thread role-pure.
+Auto-Harness is a Claude Code plugin for long-running app development. It turns one brief into a durable `Planner -> Generator -> Evaluator` workflow backed by `.harness/`, with contract review, QA, fix/retest loops, and resume support built in.
 
-- `commands/` serve as the control plane
-- `agents/` are action-specific subagents, one legal harness action per agent
-- `skills/` hold action-specific behavior such as `planner-clarify` and `evaluator-write-qa`
-- `hooks/` enforce runtime boundaries and resume behavior at the plugin root
-- `scripts/` provide runtime helpers, post-run action checks, root guards, and checkpoint support
+## At A Glance
 
-## What It Gives You
+- Turn a product brief into a multi-step Claude Code workflow instead of a single long chat
+- Keep planning, implementation, QA, and fix/retest work separated by role
+- Store durable artifacts under `.harness/` so the workflow can resume after restart or compaction
+- Review each sprint contract before code is written
+- Use explicit reviewer agents to audit QA, retest, and final reports before state advances
 
-- A strict action-specific workflow across the `Planner`, `Generator`, and `Evaluator` roles
-- A durable project state directory at `.harness/`
-- A contract-first sprint loop with review before implementation
-- Browser-capable QA through Playwright MCP on the Evaluator side
-- Session resume support through hooks and checkpoint snapshots
-- Internal action skills so subagent behavior is narrow, explicit, and easier to evolve
+## What Problem It Solves
+
+- Long tasks lose shape when planning, implementation, and QA all happen in one thread
+- Multi-day work needs durable state, not just chat history
+- Fix loops drift when the original contract and prior QA findings are not carried forward
+- Operators need a visible paper trail of specs, sprint contracts, reviews, QA reports, fix logs, and checkpoints
+
+## Good Fit
+
+- You want Claude Code to deliver a feature across multiple sprints
+- You want strict `Planner`, `Generator`, and `Evaluator` separation
+- You want QA and fix/retest to be part of the normal workflow
+- You want `.harness/` artifacts you can inspect, diff, and resume from
+
+## Not A Good Fit
+
+- One-off edits or tiny fixes that do not need workflow overhead
+- Fast exploratory spikes where you do not want contract and review checkpoints
+- Projects where creating `.harness/` state alongside the codebase is not acceptable
+
+## 30-Second Workflow
+
+```text
+User brief
+  -> Orchestrator
+  -> planner-clarify-agent
+  -> planner-spec-draft-agent
+  -> generator-draft-contract-agent
+  -> evaluator-review-contract-agent
+  -> generator-build-sprint-agent
+  -> evaluator-write-qa-agent -> qa-report-reviewer-agent
+  -> if FAIL: generator-apply-fixes-agent -> evaluator-write-retest-agent -> retest-report-reviewer-agent
+  -> evaluator-write-final-agent -> final-report-reviewer-agent
+```
+
+User interaction stays in chat. `.harness/*.md` is the durable log.
+
+## Quick Start
+
+### Prerequisites
+
+- Claude Code installed and authenticated
+- Node.js available on `PATH`
+- A target project directory where Auto-Harness can create `.harness/`
+- Playwright MCP support if you want browser QA
+
+### Install From GitHub
+
+1. Open Claude Code in the project where you want to use Auto-Harness.
+2. Add the repository as a plugin marketplace:
+
+```text
+/plugin marketplace add redker56/auto-harness
+```
+
+3. Install the plugin:
+
+```text
+/plugin install auto-harness@auto-harness-marketplace
+```
+
+4. Restart Claude Code.
+5. Run:
+
+```text
+/auto-harness:harness <your product brief or clarification reply>
+```
+
+### Operator Mental Model
+
+- Use `/auto-harness:harness` for the normal end-to-end loop
+- Use `/auto-harness:plan` for intake and spec work
+- Use `/auto-harness:build` to advance Generator-side work
+- Use `/auto-harness:qa` to advance Evaluator-side work
 
 ## Runtime Model
 
 ### Main Thread: Orchestrator
 
-The main thread does these things:
+The main thread:
 
 - reads project state from `.harness/`
 - decides which phase comes next
 - dispatches fresh subagents
 - edits `.harness/status.md` directly and refreshes `.harness/checkpoints/latest.md` when needed
+- may edit ordinary project files when needed, but leaves role-owned `.harness/` artifacts to the matching subagents
 - talks to the user directly when clarification or approval is needed
 
-The main thread does not draft the spec, write app code, or make QA judgments.
+The main thread does not draft the spec or make QA judgments.
 
 ### Action-Specific Subagents
 
@@ -52,65 +121,7 @@ Auto-Harness dispatches one focused subagent per legal harness action:
 - `retest-report-reviewer-agent`
 - `final-report-reviewer-agent`
 
-Writer agents preload exactly one internal skill and read the current project `.harness/` state for themselves. Reviewer agents use prompt-based review and audit QA/retest/final reports against embedded rubric and template requirements. Internal skills carry behavior guidance. Runtime enforcement lives at the plugin root.
-
-## End-To-End Flow
-
-```text
-User brief
-  -> Orchestrator
-  -> planner-clarify-agent
-  -> user answers inline in chat
-  -> planner-spec-draft-agent
-  -> user approves or requests revisions
-  -> generator-draft-contract-agent
-  -> evaluator-review-contract-agent
-  -> generator-build-sprint-agent
-  -> evaluator-write-qa-agent -> qa-report-reviewer-agent
-  -> if FAIL: generator-apply-fixes-agent -> evaluator-write-retest-agent -> retest-report-reviewer-agent
-  -> evaluator-write-final-agent -> final-report-reviewer-agent
-  -> next sprint or final report
-```
-
-User interaction happens in chat. `.harness/*.md` is the durable log.
-
-## Quick Start
-
-### Prerequisites
-
-- Claude Code installed and authenticated
-- Node.js available on `PATH`
-- a target project directory where Auto-Harness is allowed to create `.harness/`
-- Playwright MCP support if you want browser QA
-
-### Install From GitHub
-
-1. Open Claude Code in the project where you want to use Auto-Harness.
-2. Add the repository as a plugin marketplace:
-
-```text
-/plugin marketplace add redker56/auto-harness
-```
-
-1. Install the plugin:
-
-```text
-/plugin install auto-harness@auto-harness-marketplace
-```
-
-1. Restart Claude Code.
-2. Run:
-
-```text
-/auto-harness:harness <your product brief or clarification reply>
-```
-
-### Minimal Operator Mental Model
-
-- use `/auto-harness:harness` for the normal end-to-end loop
-- use `/auto-harness:plan` when you want intake and spec work
-- use `/auto-harness:build` when you want to advance Generator-side work
-- use `/auto-harness:qa` when you want to advance Evaluator-side work
+Writer agents preload exactly one internal skill and read the current project `.harness/` state for themselves. Reviewer agents use prompt-based review and audit QA, retest, and final reports against embedded rubric and template requirements. Internal skills carry behavior guidance. Runtime enforcement lives at the plugin root.
 
 ## Commands
 
@@ -298,7 +309,7 @@ The plugin uses plugin-root hooks:
 
 - `SessionStart`: reads `.harness/status.md`, includes a checkpoint excerpt, and resumes the active harness session from the recorded state
 - `PreCompact`: refreshes `.harness/checkpoints/latest.md` before compaction
-- `PreToolUse`: enforces all repo write boundaries from the plugin root using `.harness/status.md` as the legal-action source of truth
+- `PreToolUse`: protects `.harness/` ownership boundaries from the plugin root using `.harness/status.md` as the legal-action source of truth
 - `SubagentStart` / `SubagentStop`: track active Auto-Harness subagents for observability and root-hook enforcement
 
 Completion checks use:
@@ -325,8 +336,9 @@ In practice:
 
 ### State Files
 
-- The main thread edits `.harness/status.md` directly when advancing state.
-- The main thread may edit `.harness/checkpoints/latest.md` directly when it needs to refresh the operator-facing checkpoint.
+- The main thread edits `.harness/status.md` directly when advancing state
+- The main thread may edit `.harness/checkpoints/latest.md` directly when it needs to refresh the operator-facing checkpoint
+- Other `.harness/` artifacts stay with their owning Planner, Generator, or Evaluator subagents
 
 ### Action Check Helper
 
@@ -345,6 +357,3 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs" evaluator_review
 node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-runtime.mjs" get
 node "${CLAUDE_PLUGIN_ROOT}/scripts/harness-runtime.mjs" healthcheck
 ```
-
-
-

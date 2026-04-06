@@ -230,11 +230,14 @@ if (!targetFilePath || !isWithinProject(projectRoot, targetFilePath)) {
 
 const relativePath = relativeProjectPath(projectRoot, targetFilePath);
 if (!activeAgent) {
+  if (!isRepoHarnessFile(relativePath)) {
+    allow();
+  }
   if (allowedMainThreadPaths().has(relativePath)) {
     allow();
   }
   deny(
-    `Auto-Harness blocked repo write to ${relativePath}: the main thread may only edit .harness/status.md or .harness/checkpoints/latest.md.`,
+    `Auto-Harness blocked repo write to ${relativePath}: the main thread may not edit .harness/ artifacts other than .harness/status.md or .harness/checkpoints/latest.md.`,
   );
 }
 

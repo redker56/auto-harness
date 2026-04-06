@@ -2,77 +2,54 @@
 
 [English](README.md) | [中文](README.zh-CN.md)
 
-这个插件基于 Anthropic 的文章 [Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps) 开发。
+这个插件基于 Anthropic 的文章 [Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps)。
 
-Auto-Harness 是一个面向 Claude Code 的长周期应用开发插件。它把规划、实现、QA、修复循环和恢复执行沉淀到 `.harness/` 目录中，同时保持主线程角色纯净。
+Auto-Harness 是一个面向 Claude Code 的长周期应用开发插件。它把一次产品 brief 转成一个持久化的 `Planner -> Generator -> Evaluator` 工作流，并把 contract review、QA、fix/retest 和恢复执行能力都落到 `.harness/` 中。
 
-- `commands/` 负责控制平面
-- `agents/` 是动作级 subagent，每个 agent 对应一个合法 harness action
-- `skills/` 承载动作级行为，例如 `planner-clarify` 和 `evaluator-write-qa`
-- `hooks/` 在插件根执行运行时边界约束和恢复逻辑
-- `scripts/` 提供运行时、动作检查、根级守卫和 checkpoint 辅助能力
+## 一眼看懂
 
-## 你会得到什么
+- 把一次产品需求变成多阶段工作流，而不是一段无限拉长的聊天
+- 把规划、实现、QA 和修复循环按角色拆开
+- 用 `.harness/` 保存持久化状态，支持重启和 compaction 后继续推进
+- 每个 sprint 先过 contract review，再进入实现
+- QA、retest 和 final report 都会经过显式 reviewer agent 审核
 
-- 严格的 `Planner`、`Generator`、`Evaluator` 动作级工作流
-- 持久化的 `.harness/` 项目状态目录
-- 先 contract review 再实现的 sprint 循环
-- Evaluator 侧可用 Playwright MCP 做浏览器 QA
-- 通过 hooks 和 checkpoint 快照实现的恢复能力
-- 通过 internal skills 约束 subagent 的动作边界与写作行为
+## 它解决什么问题
 
-## 运行模型
+- 长任务把规划、实现和 QA 混在同一个线程里时，很容易失控
+- 多天、多 sprint 的工作需要持久状态，而不只是聊天上下文
+- fix loop 如果不继承原始 contract 和上一轮 QA 结论，很容易越修越偏
+- 操作者需要能落盘、能检查、能恢复的 spec、contract、review、QA report、fix log 和 checkpoint
 
-### Main Thread: Orchestrator
+## 适合什么场景
 
-主线程负责：
+- 你希望 Claude Code 跨多个 sprint 交付一个功能
+- 你希望 `Planner`、`Generator`、`Evaluator` 角色严格分离
+- 你希望 QA 和 fix/retest 成为默认流程的一部分
+- 你希望 `.harness/` 产物可读、可 diff、可恢复
 
-- 读取 `.harness/` 状态
-- 判断下一步合法阶段
-- 派发新的 subagent
-- 直接编辑 `.harness/status.md`，并在需要时刷新 `.harness/checkpoints/latest.md`
-- 在需要澄清或审批时直接与用户对话
+## 不适合什么场景
 
-主线程不写 spec，不写应用代码，也不做 QA 判断。
+- 一次性的小改动或很小的 bug 修复
+- 不想承担 contract / review / report 这些流程成本的探索性尝试
+- 不接受在项目旁边生成 `.harness/` 状态目录的仓库
 
-### Action-Specific Subagents
-
-Auto-Harness 会按合法动作派发这些 focused subagent：
-
-- `planner-clarify-agent`
-- `planner-spec-draft-agent`
-- `generator-draft-contract-agent`
-- `generator-build-sprint-agent`
-- `generator-apply-fixes-agent`
-- `evaluator-review-contract-agent`
-- `evaluator-write-qa-agent`
-- `evaluator-write-retest-agent`
-- `evaluator-write-final-agent`
-- `qa-report-reviewer-agent`
-- `retest-report-reviewer-agent`
-- `final-report-reviewer-agent`
-
-writer agents 会各自预加载一个 internal skill，并自行读取当前项目里的 `.harness/` 状态。reviewer agents 通过 prompt 审查 QA、retest 和 final 报告，并按内嵌的 rubric 和 template 要求进行判断。internal skills 负责行为指导。运行时执法位于插件根。
-
-## 端到端流程
+## 30 秒理解工作流
 
 ```text
 User brief
   -> Orchestrator
   -> planner-clarify-agent
-  -> user answers inline in chat
   -> planner-spec-draft-agent
-  -> user approves or requests revisions
   -> generator-draft-contract-agent
   -> evaluator-review-contract-agent
   -> generator-build-sprint-agent
   -> evaluator-write-qa-agent -> qa-report-reviewer-agent
   -> if FAIL: generator-apply-fixes-agent -> evaluator-write-retest-agent -> retest-report-reviewer-agent
   -> evaluator-write-final-agent -> final-report-reviewer-agent
-  -> next sprint or final report
 ```
 
-用户交互始终发生在 chat 中；`.harness/*.md` 是持久化日志。
+用户交互始终发生在 chat 中，`.harness/*.md` 是持久化日志。
 
 ## 快速开始
 
@@ -80,8 +57,8 @@ User brief
 
 - 已安装并登录 Claude Code
 - `PATH` 中可用 `Node.js`
-- 目标项目目录允许创建 `.harness/`
-- 如果要做浏览器 QA，需要具备 Playwright MCP 支持
+- 目标项目目录允许 Auto-Harness 创建 `.harness/`
+- 如果需要浏览器 QA，具备 Playwright MCP 支持
 
 ### 从 GitHub 安装
 
@@ -105,12 +82,46 @@ User brief
 /auto-harness:harness <你的产品 brief 或澄清回复>
 ```
 
-### 最小操作心智
+### 操作员心智模型
 
 - 用 `/auto-harness:harness` 跑完整端到端流程
 - 用 `/auto-harness:plan` 处理 intake 和 spec
 - 用 `/auto-harness:build` 推进 Generator 侧工作
 - 用 `/auto-harness:qa` 推进 Evaluator 侧工作
+
+## 运行模型
+
+### Main Thread: Orchestrator
+
+主线程负责：
+
+- 读取 `.harness/` 状态
+- 判断下一步合法阶段
+- 派发新的 subagent
+- 直接编辑 `.harness/status.md`，并在需要时刷新 `.harness/checkpoints/latest.md`
+- 在需要时也可以编辑普通项目文件，但会把有归属的 `.harness/` 产物留给对应 subagent
+- 在需要澄清或审批时直接与用户对话
+
+主线程不写 spec，也不做 QA 判断。
+
+### Action-Specific Subagents
+
+Auto-Harness 会按合法动作派发这些 focused subagent：
+
+- `planner-clarify-agent`
+- `planner-spec-draft-agent`
+- `generator-draft-contract-agent`
+- `generator-build-sprint-agent`
+- `generator-apply-fixes-agent`
+- `evaluator-review-contract-agent`
+- `evaluator-write-qa-agent`
+- `evaluator-write-retest-agent`
+- `evaluator-write-final-agent`
+- `qa-report-reviewer-agent`
+- `retest-report-reviewer-agent`
+- `final-report-reviewer-agent`
+
+writer agents 各自预加载一个 internal skill，并自行读取当前项目中的 `.harness/` 状态。reviewer agents 通过 prompt 审查 QA、retest 和 final 报告，并按照内嵌的 rubric 与 template 做判断。internal skills 负责行为指导，运行时执法位于插件根。
 
 ## Commands
 
@@ -125,7 +136,7 @@ User brief
 
 ### `/auto-harness:plan <brief-or-clarification-answers>`
 
-规划模式，可：
+规划模式，可用于：
 
 - 初始化 `.harness/intake.md`
 - 提出澄清问题
@@ -178,7 +189,7 @@ Evaluator 侧命令，会从 `.harness/status.md` 自动选择当前合法动作
 | --- | --- | --- |
 | `.harness/intake.md` | Planner | 已澄清需求、锁定决策与约束 |
 | `.harness/spec.md` | Planner | 已批准的实现计划与 sprint 拆分 |
-| `.harness/design-direction.md` | Planner | Generator 应遵循的 UI、交互或产品方向 |
+| `.harness/design-direction.md` | Planner | Generator 需要遵循的 UI、交互或产品方向 |
 | `.harness/status.md` | Planner + Orchestrator | 机器可读的状态真源，由 Planner 初始化，由 Orchestrator 推进 |
 | `.harness/runtime.md` | Generator | 启动和校验应用的运行时契约 |
 | `.harness/contracts/sprint-XX-contract.md` | Generator | 当前 sprint 的实现 contract |
@@ -288,7 +299,7 @@ auto-harness/
 这些 skills 的特点：
 
 - 不作为用户主入口
-- 不在 `/` 菜单里作为正常工作流展示
+- 不在 `/` 菜单中作为正常工作流展示
 - 由对应的 action-specific subagent 预加载
 - 负责动作级规则、模板和写作指导
 
@@ -298,14 +309,14 @@ auto-harness/
 
 - `SessionStart`：读取 `.harness/status.md`，注入 checkpoint 摘要，并按记录状态恢复当前 harness session
 - `PreCompact`：在 compaction 前刷新 `.harness/checkpoints/latest.md`
-- `PreToolUse`：在插件根统一执行 repo 写入边界约束，并把 `.harness/status.md` 作为合法动作真源
+- `PreToolUse`：在插件根统一保护 `.harness/` 归属边界，并把 `.harness/status.md` 作为合法动作真源
 - `SubagentStart` / `SubagentStop`：跟踪当前活跃的 Auto-Harness subagent，便于观察和根级执法
 
 完成度检查包括：
 
 - Planner、Generator 和 contract-review 的产物由 `node "${CLAUDE_PLUGIN_ROOT}/scripts/action-check.mjs"` 显式校验
 - QA、retest 和 final 报告由显式 reviewer agents 审查
-- 这些检查通过后，Orchestrator 会推进状态
+- 这些检查通过后，Orchestrator 才会推进状态
 
 ## Playwright MCP
 
@@ -326,7 +337,8 @@ npx -y @playwright/mcp@latest
 ### 状态文件
 
 - 主线程在推进状态时直接编辑 `.harness/status.md`
-- 主线程在需要刷新操作员可读 checkpoint 时直接编辑 `.harness/checkpoints/latest.md`
+- 主线程在需要刷新操作者可读 checkpoint 时直接编辑 `.harness/checkpoints/latest.md`
+- 其他 `.harness/` 产物继续由各自的 Planner、Generator 或 Evaluator subagent 维护
 
 ### Action Check Helper
 

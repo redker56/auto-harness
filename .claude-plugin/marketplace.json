@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Marketplace for the Auto-Harness Claude Code plugin.",
-    "version": "0.3.2"
+    "version": "0.3.3"
   },
   "plugins": [
     {
       "name": "auto-harness",
       "source": "./",
       "description": "Orchestrated long-running coding harness for Claude Code with commands, action-specific subagents, internal action skills, hooks, and durable .harness artifacts.",
-      "version": "0.3.2",
+      "version": "0.3.3",
       "author": {
         "name": "redker56"
       },
