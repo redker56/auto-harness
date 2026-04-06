@@ -11,9 +11,6 @@ kind: template
 ## Original Brief
 - ...
 
-## Selected Pack
-- selected_pack: default
-
 ## Current Project Analysis
 - ...
 
@@ -44,5 +41,4 @@ kind: template
 Guidance:
 
 - Questions should be grouped, numbered, and easy for Orchestrator to relay in chat.
-- Keep `Selected Pack` near the top so downstream agents can find it quickly.
 

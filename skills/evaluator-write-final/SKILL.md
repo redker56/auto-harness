@@ -34,15 +34,6 @@ Then read these skill references:
 - `references/rubrics/visual-design.md`
 - `references/rubrics/code-quality.md`
 
-Then read the selected pack when `selected_pack` is present in `.harness/intake.md`:
-
-- `references/packs/default.md`
-- `references/packs/internal-tool.md`
-- `references/packs/mobile-first.md`
-- `references/packs/nextjs-supabase.md`
-- `references/packs/react-fastapi-postgres.md`
-- `references/packs/saas-product.md`
-
 Follow these rules:
 
 - Summarize the actual build and actual sprint outcomes that exist on disk.

@@ -37,5 +37,4 @@ Follow these rules:
 - Write only `.harness/intake.md` and `.harness/status.md`.
 - Produce a relay-ready numbered clarification questionnaire for the Orchestrator.
 - Do not draft `.harness/spec.md` or `.harness/design-direction.md`.
-- Default `selected_pack` to `default` unless the brief clearly fits a better pack.
 - If the user has not explicitly answered a clarification item, keep it unresolved rather than inferring it from the brief.

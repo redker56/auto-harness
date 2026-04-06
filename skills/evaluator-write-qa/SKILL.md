@@ -35,15 +35,6 @@ Then read these skill references:
 - `references/rubrics/visual-design.md`
 - `references/rubrics/code-quality.md`
 
-Then read the selected pack when `selected_pack` is present in `.harness/intake.md`:
-
-- `references/packs/default.md`
-- `references/packs/internal-tool.md`
-- `references/packs/mobile-first.md`
-- `references/packs/nextjs-supabase.md`
-- `references/packs/react-fastapi-postgres.md`
-- `references/packs/saas-product.md`
-
 Follow these rules:
 
 - Before issuing PASS or FAIL, complete the main end-to-end user flow promised by the current sprint contract against the running app.

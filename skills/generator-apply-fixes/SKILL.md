@@ -32,15 +32,6 @@ Then read these skill references:
 - `references/templates/fix-log.md`
 - `references/templates/runtime-template.md`
 
-Then read the selected pack when `selected_pack` is present in `.harness/intake.md`:
-
-- `references/packs/default.md`
-- `references/packs/internal-tool.md`
-- `references/packs/mobile-first.md`
-- `references/packs/nextjs-supabase.md`
-- `references/packs/react-fastapi-postgres.md`
-- `references/packs/saas-product.md`
-
 Follow these rules:
 
 - Fix only defects named in the current QA or retest context unless a tightly related adjustment is required.

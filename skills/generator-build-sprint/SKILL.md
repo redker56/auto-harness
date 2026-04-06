@@ -30,15 +30,6 @@ Then read these skill references:
 - `references/templates/runtime-template.md`
 - `references/templates/self-check.md`
 
-Then read the selected pack when `selected_pack` is present in `.harness/intake.md`:
-
-- `references/packs/default.md`
-- `references/packs/internal-tool.md`
-- `references/packs/mobile-first.md`
-- `references/packs/nextjs-supabase.md`
-- `references/packs/react-fastapi-postgres.md`
-- `references/packs/saas-product.md`
-
 Follow these rules:
 
 - Implement only the approved sprint scope.

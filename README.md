@@ -176,7 +176,7 @@ Evaluator-side mode. It auto-selects the current legal Evaluator action from `.h
 
 | Artifact | Owner | Purpose |
 | --- | --- | --- |
-| `.harness/intake.md` | Planner | Clarified requirements, locked decisions, constraints, and selected pack |
+| `.harness/intake.md` | Planner | Clarified requirements, locked decisions, and constraints |
 | `.harness/spec.md` | Planner | Approved implementation plan and sprint breakdown |
 | `.harness/design-direction.md` | Planner | UI, interaction, or product direction that Generator should follow |
 | `.harness/status.md` | Planner + Orchestrator | Machine-readable state source of truth initialized by Planner and advanced by Orchestrator |
@@ -201,7 +201,6 @@ total_sprints: 3
 pending_action: evaluator_review
 last_agent: generator
 approval_required: false
-selected_pack: default
 ```
 
 Typical phases:
@@ -291,7 +290,7 @@ These skills are internal:
 - not shown as user-facing workflow commands
 - not intended for direct operator use
 - preloaded by the matching subagent kernel
-- responsible for action-specific rules, templates, packs, and report-writing guidance
+- responsible for action-specific rules, templates, and report-writing guidance
 
 ## Hooks And Resume Behavior
 

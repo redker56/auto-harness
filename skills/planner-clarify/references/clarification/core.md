@@ -13,11 +13,6 @@ kind: policy
 - Use repository evidence to avoid asking things the codebase already answers.
 - Ask enough to make the first spec draft concrete, testable, and implementation-guiding.
 
-## Selection Defaults
-
-- Default `selected_pack` to `default` unless the brief clearly fits a better pack.
-- Persist the selected pack near the top of `.harness/intake.md`.
-
 ## Refactor Guidance
 
 - For an existing codebase, ask what should be preserved versus replaced.

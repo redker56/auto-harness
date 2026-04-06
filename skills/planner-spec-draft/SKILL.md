@@ -27,22 +27,12 @@ Then read these skill references:
 - `references/templates/design-direction-template.md`
 - `references/templates/status-board.md`
 
-Then read the selected pack when `selected_pack` is present in `.harness/intake.md`:
-
-- `references/packs/default.md`
-- `references/packs/internal-tool.md`
-- `references/packs/mobile-first.md`
-- `references/packs/nextjs-supabase.md`
-- `references/packs/react-fastapi-postgres.md`
-- `references/packs/saas-product.md`
-
 Follow these rules:
 
 - Update `.harness/intake.md` first so it stays the durable decision log.
 - Ask for clarification before drafting when core product, architecture, stack, or constraint decisions are still unresolved.
 - Then write or revise `.harness/spec.md` and `.harness/design-direction.md`.
 - Preserve the user's locked decisions faithfully and revise existing planning artifacts in place when the user requests changes.
-- Mirror `selected_pack` into `.harness/status.md` when known.
 - Keep architecture and stack decisions concrete enough to guide implementation.
 - Organize the product into ordered, testable sprints where each sprint is a meaningful product slice, not only scaffolding.
 - Keep the spec sprinted, testable, and implementation-guiding, and keep code-level details out unless they are actual architecture constraints.

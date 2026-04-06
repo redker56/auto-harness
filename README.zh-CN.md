@@ -176,7 +176,7 @@ Evaluator 侧命令，会从 `.harness/status.md` 自动选择当前合法动作
 
 | Artifact | Owner | Purpose |
 | --- | --- | --- |
-| `.harness/intake.md` | Planner | 已澄清需求、锁定决策、约束与 selected pack |
+| `.harness/intake.md` | Planner | 已澄清需求、锁定决策与约束 |
 | `.harness/spec.md` | Planner | 已批准的实现计划与 sprint 拆分 |
 | `.harness/design-direction.md` | Planner | Generator 应遵循的 UI、交互或产品方向 |
 | `.harness/status.md` | Planner + Orchestrator | 机器可读的状态真源，由 Planner 初始化，由 Orchestrator 推进 |
@@ -201,7 +201,6 @@ total_sprints: 3
 pending_action: evaluator_review
 last_agent: generator
 approval_required: false
-selected_pack: default
 ```
 
 典型 phase：
@@ -291,7 +290,7 @@ auto-harness/
 - 不作为用户主入口
 - 不在 `/` 菜单里作为正常工作流展示
 - 由对应的 action-specific subagent 预加载
-- 负责动作级规则、模板、pack 内容和写作指导
+- 负责动作级规则、模板和写作指导
 
 ## Hooks 与恢复能力
 

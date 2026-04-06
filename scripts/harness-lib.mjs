@@ -131,9 +131,6 @@ export function statusSummary(frontmatter) {
     `Last agent: ${frontmatter.last_agent ?? "unknown"}`,
     `Approval required: ${frontmatter.approval_required ?? false}`,
   ];
-  if (frontmatter.selected_pack) {
-    lines.splice(4, 0, `Selected pack: ${frontmatter.selected_pack}`);
-  }
   return lines.join("\n");
 }
 

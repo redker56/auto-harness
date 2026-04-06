@@ -27,15 +27,6 @@ Then read these skill references:
 - `references/protocols/file-ownership.md`
 - `references/templates/sprint-contract.md`
 
-Then read the selected pack when `selected_pack` is present in `.harness/intake.md`:
-
-- `references/packs/default.md`
-- `references/packs/internal-tool.md`
-- `references/packs/mobile-first.md`
-- `references/packs/nextjs-supabase.md`
-- `references/packs/react-fastapi-postgres.md`
-- `references/packs/saas-product.md`
-
 Follow these rules:
 
 - Treat `.harness/intake.md`, `.harness/spec.md`, the current sprint contract, and any current-sprint review artifact as authoritative inputs.

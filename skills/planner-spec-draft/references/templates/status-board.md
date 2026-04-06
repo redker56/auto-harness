@@ -13,7 +13,6 @@ current_sprint: <number>
 total_sprints: <number>
 pending_action: <action>
 last_agent: <planner|generator|evaluator|orchestrator>
-selected_pack: default
 approval_required: <true|false>
 ```
 
@@ -28,7 +27,6 @@ current_sprint: 0
 total_sprints: 0
 pending_action: brief_clarification
 last_agent: planner
-selected_pack: default
 approval_required: true
 ---
 ```
@@ -42,7 +40,6 @@ current_sprint: 0
 total_sprints: <number of planned sprints>
 pending_action: spec_approval
 last_agent: planner
-selected_pack: <pack name>
 approval_required: true
 ---
 ```
@@ -56,7 +53,6 @@ current_sprint: <sprint number>
 total_sprints: <number of planned sprints>
 pending_action: generator_contract | evaluator_review
 last_agent: generator | evaluator | orchestrator
-selected_pack: <pack name>
 approval_required: false
 ---
 ```
@@ -70,7 +66,6 @@ current_sprint: <sprint number>
 total_sprints: <number of planned sprints>
 pending_action: generator_build
 last_agent: evaluator
-selected_pack: <pack name>
 approval_required: false
 ---
 ```
@@ -84,7 +79,6 @@ current_sprint: <sprint number>
 total_sprints: <number of planned sprints>
 pending_action: evaluator_qa | evaluator_retest | evaluator_final
 last_agent: generator | evaluator
-selected_pack: <pack name>
 approval_required: false
 ---
 ```
@@ -98,7 +92,6 @@ current_sprint: <sprint number>
 total_sprints: <number of planned sprints>
 pending_action: generator_fix
 last_agent: evaluator
-selected_pack: <pack name>
 approval_required: false
 ---
 ```
@@ -112,7 +105,6 @@ current_sprint: <total_sprints>
 total_sprints: <number of planned sprints>
 pending_action: none
 last_agent: evaluator
-selected_pack: <pack name>
 approval_required: false
 ---
 ```
