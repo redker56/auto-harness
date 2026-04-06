@@ -4,35 +4,34 @@
 
 这个插件基于 Anthropic 的文章 [Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps)。
 
-Auto-Harness 是一个面向 Claude Code 的长周期应用开发插件。它把一次产品 brief 转成一个持久化的 `Planner -> Generator -> Evaluator` 工作流，并把 contract review、QA、fix/retest 和恢复执行能力都落到 `.harness/` 中。
+Auto-Harness 让你在 Claude Code 里就像“带着一支小型专业团队”在推进项目，而不是困在一场没完没了的对话里。你只需要给一个需求概要，它就会把规划、开发、测试、修复重测和最终汇总纳入一个持久的 `规划器 -> 生成器 -> 评估器` 工作流，所有关键产出都会保存在 `.harness/` 目录中。
 
-## 一眼看懂
+## 核心特点
 
-- 把一次产品需求变成多阶段工作流，而不是一段无限拉长的聊天
-- 把规划、实现、QA 和修复循环按角色拆开
-- 用 `.harness/` 保存持久化状态，支持重启和 compaction 后继续推进
-- 每个 sprint 先过 contract review，再进入实现
-- QA、retest 和 final report 都会经过显式 reviewer agent 审核
+- 把产品需求变成“像有团队在交付”的多阶段工作流，而不是一场没完没了的对话
+- 将规划、开发、测试和修复循环拆分成更像专业分工的角色
+- 用 `.harness/` 保存持久化状态，即使重启或压缩对话，多天任务也能继续推进
+- 每个迭代周期先进行契约评审，再进入开发，避免跑偏
+- 测试、重测和最终报告都会经过专门的评审代理审核，防止流程糊弄过关
 
-## 它解决什么问题
+## 解决的问题
 
-- 长任务把规划、实现和 QA 混在同一个线程里时，很容易失控
-- 多天、多 sprint 的工作需要持久状态，而不只是聊天上下文
-- fix loop 如果不继承原始 contract 和上一轮 QA 结论，很容易越修越偏
-- 操作者需要能落盘、能检查、能恢复的 spec、contract、review、QA report、fix log 和 checkpoint
+- 长任务把规划、开发和测试混在同一个对话线程里，很容易失控
+- 跨多天、多迭代周期的项目推进需要持久状态，不能只靠聊天上下文和临场发挥
+- 修复循环如果不继承原始契约和上一轮测试结论，很容易越修越偏
+- 真正要交付的项目，需要能落盘、能检查、能恢复的规格说明、契约、评审记录、测试报告、修复日志和检查点
 
-## 适合什么场景
+## 适用场景
 
-- 你希望 Claude Code 跨多个 sprint 交付一个功能
-- 你希望 `Planner`、`Generator`、`Evaluator` 角色严格分离
-- 你希望 QA 和 fix/retest 成为默认流程的一部分
-- 你希望 `.harness/` 产物可读、可 diff、可恢复
+- 希望 Claude Code 跨多个迭代周期交付一个功能
+- 希望 `规划器`、`生成器`、`评估器` 这三个角色严格分离
+- 希望测试和修复重测成为默认流程的一部分
+- 希望 `.harness/` 中的产物可读、可对比差异、可恢复
 
-## 不适合什么场景
+## 不适用场景
 
-- 一次性的小改动或很小的 bug 修复
-- 不想承担 contract / review / report 这些流程成本的探索性尝试
-- 不接受在项目旁边生成 `.harness/` 状态目录的仓库
+- 一次性小改动或很小的 Bug 修复
+- 不想承担契约/评审/报告等流程成本的探索性尝试
 
 ## 30 秒理解工作流
 
@@ -69,14 +68,14 @@ User brief
 /plugin marketplace add redker56/auto-harness
 ```
 
-3. 安装插件：
+1. 安装插件：
 
 ```text
 /plugin install auto-harness@auto-harness-marketplace
 ```
 
-4. 重启 Claude Code。
-5. 运行：
+1. 重启 Claude Code。
+2. 运行：
 
 ```text
 /auto-harness:harness <你的产品 brief 或澄清回复>

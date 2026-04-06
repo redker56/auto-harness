@@ -11,7 +11,7 @@
     {
       "name": "auto-harness",
       "source": "./",
-      "description": "Orchestrated long-running coding harness for Claude Code with commands, action-specific subagents, internal action skills, hooks, and durable .harness artifacts.",
+      "description": "Run Claude Code like a specialist software team with planning, implementation, QA, fix/retest loops, and durable .harness state.",
       "version": "0.3.3",
       "author": {
         "name": "redker56"

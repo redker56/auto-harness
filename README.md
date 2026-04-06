@@ -4,22 +4,22 @@
 
 This plugin is based on Anthropic's article, [Harness design for long-running application development](https://www.anthropic.com/engineering/harness-design-long-running-apps).
 
-Auto-Harness is a Claude Code plugin for long-running app development. It turns one brief into a durable `Planner -> Generator -> Evaluator` workflow backed by `.harness/`, with contract review, QA, fix/retest loops, and resume support built in.
+Auto-Harness lets you run Claude Code like a small, specialized software team instead of a single endless chat. Give it a brief, and it drives planning, implementation, QA, fix/retest, and final reporting through a durable `Planner -> Generator -> Evaluator` workflow backed by `.harness/`.
 
 ## At A Glance
 
-- Turn a product brief into a multi-step Claude Code workflow instead of a single long chat
-- Keep planning, implementation, QA, and fix/retest work separated by role
-- Store durable artifacts under `.harness/` so the workflow can resume after restart or compaction
-- Review each sprint contract before code is written
-- Use explicit reviewer agents to audit QA, retest, and final reports before state advances
+- Turn one product brief into a staffed-looking delivery workflow inside Claude Code
+- Split planning, implementation, QA, and fix/retest into specialist roles instead of one overloaded assistant
+- Keep durable `.harness/` artifacts so multi-day work survives restart, compaction, and handoff
+- Review each sprint contract before code is written so implementation stays pointed at a real target
+- Gate QA, retest, and final reporting with explicit reviewer agents before state advances
 
 ## What Problem It Solves
 
-- Long tasks lose shape when planning, implementation, and QA all happen in one thread
-- Multi-day work needs durable state, not just chat history
+- Long tasks collapse when planning, implementation, and QA all happen in one thread
+- Multi-day project work needs durable state, not just chat history and wishful thinking
 - Fix loops drift when the original contract and prior QA findings are not carried forward
-- Operators need a visible paper trail of specs, sprint contracts, reviews, QA reports, fix logs, and checkpoints
+- Serious delivery work needs a visible paper trail of specs, sprint contracts, reviews, QA reports, fix logs, and checkpoints
 
 ## Good Fit
 
@@ -32,7 +32,6 @@ Auto-Harness is a Claude Code plugin for long-running app development. It turns 
 
 - One-off edits or tiny fixes that do not need workflow overhead
 - Fast exploratory spikes where you do not want contract and review checkpoints
-- Projects where creating `.harness/` state alongside the codebase is not acceptable
 
 ## 30-Second Workflow
 
@@ -69,14 +68,14 @@ User interaction stays in chat. `.harness/*.md` is the durable log.
 /plugin marketplace add redker56/auto-harness
 ```
 
-3. Install the plugin:
+1. Install the plugin:
 
 ```text
 /plugin install auto-harness@auto-harness-marketplace
 ```
 
-4. Restart Claude Code.
-5. Run:
+1. Restart Claude Code.
+2. Run:
 
 ```text
 /auto-harness:harness <your product brief or clarification reply>
