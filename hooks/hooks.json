@@ -68,11 +68,41 @@
         ]
       },
       {
+        "matcher": "auto-harness:generator-draft-contract-parallel-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:generator-draft-contract-parallel-agent",
+            "async": false
+          }
+        ]
+      },
+      {
         "matcher": "auto-harness:generator-build-sprint-agent",
         "hooks": [
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:generator-build-sprint-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:generator-build-integrator-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:generator-build-integrator-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:generator-build-worker-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:generator-build-worker-agent",
             "async": false
           }
         ]
@@ -88,11 +118,41 @@
         ]
       },
       {
+        "matcher": "auto-harness:generator-fix-integrator-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:generator-fix-integrator-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:generator-fix-worker-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:generator-fix-worker-agent",
+            "async": false
+          }
+        ]
+      },
+      {
         "matcher": "auto-harness:evaluator-review-contract-agent",
         "hooks": [
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:evaluator-review-contract-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:evaluator-review-contract-parallel-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:evaluator-review-contract-parallel-agent",
             "async": false
           }
         ]
@@ -190,11 +250,41 @@
         ]
       },
       {
+        "matcher": "auto-harness:generator-draft-contract-parallel-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:generator-draft-contract-parallel-agent",
+            "async": false
+          }
+        ]
+      },
+      {
         "matcher": "auto-harness:generator-build-sprint-agent",
         "hooks": [
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:generator-build-sprint-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:generator-build-integrator-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:generator-build-integrator-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:generator-build-worker-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:generator-build-worker-agent",
             "async": false
           }
         ]
@@ -210,11 +300,41 @@
         ]
       },
       {
+        "matcher": "auto-harness:generator-fix-integrator-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:generator-fix-integrator-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:generator-fix-worker-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:generator-fix-worker-agent",
+            "async": false
+          }
+        ]
+      },
+      {
         "matcher": "auto-harness:evaluator-review-contract-agent",
         "hooks": [
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:evaluator-review-contract-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:evaluator-review-contract-parallel-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:evaluator-review-contract-parallel-agent",
             "async": false
           }
         ]
