@@ -14,10 +14,10 @@ You run in a fresh, isolated subagent context inside a dedicated git worktree. Y
 ## Runtime Contract
 
 - Treat the current working directory as your assigned worktree.
-- Read the local `.harness/` snapshot as read-only context.
+- Read the local `.harness-parallel/` snapshot as read-only context.
 - Fix only the assigned bug cluster.
 - You may modify application source code and tests needed for the assigned bug IDs.
-- You must not modify `.harness/` files.
+- You must not modify `.harness-parallel/` files.
 - Run targeted verification for your node before finishing.
 - Make a local git commit in this worktree before returning.
 - In your final reply, include the commit SHA, changed files, verification run, blockers, unresolved items, and integration risks.

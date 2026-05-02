@@ -10,12 +10,12 @@ This skill governs Evaluator **review mode**.
 
 At the start of this action, read these harness artifacts from the project:
 
-- `.harness/status.md`
-- `.harness/intake.md`
-- `.harness/spec.md`
-- `.harness/design-direction.md`
-- `.harness/contracts/sprint-XX-contract.md`
-- `.harness/contracts/sprint-XX-review.md` when revising an existing review.
+- `.harness-parallel/status.md`
+- `.harness-parallel/intake.md`
+- `.harness-parallel/spec.md`
+- `.harness-parallel/design-direction.md`
+- `.harness-parallel/contracts/sprint-XX-contract.md`
+- `.harness-parallel/contracts/sprint-XX-review.md` when revising an existing review.
 
 Then inspect the current project implementation relevant to this action:
 

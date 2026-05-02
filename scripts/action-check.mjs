@@ -6,6 +6,8 @@ import {
   CONTRACT_GRAPH_HEADING,
   extractMarkdownSection,
   formatSprintNumber,
+  harnessDirForAction,
+  harnessPath,
   readJsonSectionFromMarkdownFileResult,
   readStatusDocument,
   validateBuildGraph,
@@ -52,7 +54,7 @@ function resolveSprint(status, action) {
   const value = status?.frontmatter?.current_sprint;
   const parsed = Number.parseInt(String(value ?? ""), 10);
   if (Number.isNaN(parsed) || parsed < 1) {
-    fail(action, "current_sprint is missing or invalid in .harness/status.md.");
+    fail(action, `current_sprint is missing or invalid in ${harnessPath(harnessDirForAction(action), "status.md")}.`);
   }
   return formatSprintNumber(parsed);
 }
@@ -63,29 +65,46 @@ function isParallelAction(actionName) {
 
 const action = process.argv[2];
 const projectRoot = path.resolve(process.argv[3] || process.cwd());
-const status = readStatusDocument(projectRoot);
+const harnessDir = harnessDirForAction(action);
+const status = readStatusDocument(projectRoot, harnessDir);
 
 if (!action) {
   fail("unknown", "Usage: action-check.mjs <action> [projectRoot]");
 }
 
-if (action === "planner_clarify") {
-  const missing = [];
-  if (!fileExists(projectRoot, ".harness/intake.md")) {
-    missing.push(".harness/intake.md");
+function requireMatchingWorkflowMode(actionName, statusDocument) {
+  if (!statusDocument || !isParallelAction(actionName)) {
+    return;
   }
-  if (!fileExists(projectRoot, ".harness/status.md")) {
-    missing.push(".harness/status.md");
+  if (statusDocument.frontmatter.workflow_mode !== "parallel") {
+    fail(actionName, `${harnessPath(harnessDir, "status.md")} must declare workflow_mode=parallel.`, {
+      workflowMode: statusDocument.frontmatter.workflow_mode ?? null,
+    });
+  }
+}
+
+if (action === "planner_clarify" || action === "planner_clarify_parallel") {
+  const missing = [];
+  const intakePath = harnessPath(harnessDir, "intake.md");
+  const statusPath = harnessPath(harnessDir, "status.md");
+  const specPath = harnessPath(harnessDir, "spec.md");
+  const designPath = harnessPath(harnessDir, "design-direction.md");
+  if (!fileExists(projectRoot, intakePath)) {
+    missing.push(intakePath);
+  }
+  if (!fileExists(projectRoot, statusPath)) {
+    missing.push(statusPath);
   }
   if (missing.length > 0) {
     fail(action, "planner_clarify outputs are incomplete.", { missing });
   }
+  requireMatchingWorkflowMode(action, readStatusDocument(projectRoot, harnessDir));
   const forbidden = [];
-  if (fileExists(projectRoot, ".harness/spec.md")) {
-    forbidden.push(".harness/spec.md");
+  if (fileExists(projectRoot, specPath)) {
+    forbidden.push(specPath);
   }
-  if (fileExists(projectRoot, ".harness/design-direction.md")) {
-    forbidden.push(".harness/design-direction.md");
+  if (fileExists(projectRoot, designPath)) {
+    forbidden.push(designPath);
   }
   if (forbidden.length > 0) {
     fail(action, "planner_clarify created planner outputs that should not exist yet.", { forbidden });
@@ -93,12 +112,12 @@ if (action === "planner_clarify") {
   succeed(action);
 }
 
-if (action === "planner_spec_draft") {
+if (action === "planner_spec_draft" || action === "planner_spec_draft_parallel") {
   const missing = [];
   for (const relativePath of [
-    ".harness/intake.md",
-    ".harness/spec.md",
-    ".harness/design-direction.md",
+    harnessPath(harnessDir, "intake.md"),
+    harnessPath(harnessDir, "spec.md"),
+    harnessPath(harnessDir, "design-direction.md"),
   ]) {
     if (!fileExists(projectRoot, relativePath)) {
       missing.push(relativePath);
@@ -107,16 +126,19 @@ if (action === "planner_spec_draft") {
   if (missing.length > 0) {
     fail(action, "planner_spec_draft outputs are incomplete.", { missing });
   }
+  requireMatchingWorkflowMode(action, readStatusDocument(projectRoot, harnessDir));
   succeed(action);
 }
 
 if (!status) {
-  fail(action, ".harness/status.md does not exist.");
+  fail(action, `${harnessPath(harnessDir, "status.md")} does not exist.`);
 }
+
+requireMatchingWorkflowMode(action, status);
 
 if (action === "generator_contract" || action === "generator_contract_parallel") {
   const sprint = resolveSprint(status, action);
-  const relativePath = `.harness/contracts/sprint-${sprint}-contract.md`;
+  const relativePath = harnessPath(harnessDir, "contracts", `sprint-${sprint}-contract.md`);
   if (!fileExists(projectRoot, relativePath)) {
     fail(action, "generator_contract did not produce the current sprint contract.", { missing: [relativePath] });
   }
@@ -188,8 +210,8 @@ if (action === "generator_build") {
   const sprint = resolveSprint(status, action);
   const missing = [];
   const required = [
-    ".harness/runtime.md",
-    `.harness/qa/sprint-${sprint}-self-check.md`,
+    harnessPath(harnessDir, "runtime.md"),
+    harnessPath(harnessDir, "qa", `sprint-${sprint}-self-check.md`),
   ];
   for (const relativePath of required) {
     if (!fileExists(projectRoot, relativePath)) {
@@ -206,8 +228,8 @@ if (action === "generator_build_parallel") {
   const sprint = resolveSprint(status, action);
   const missing = [];
   const required = [
-    ".harness/runtime.md",
-    `.harness/qa/sprint-${sprint}-self-check.md`,
+    harnessPath(harnessDir, "runtime.md"),
+    harnessPath(harnessDir, "qa", `sprint-${sprint}-self-check.md`),
   ];
   for (const relativePath of required) {
     if (!fileExists(projectRoot, relativePath)) {
@@ -222,7 +244,7 @@ if (action === "generator_build_parallel") {
 
 if (action === "generator_fix") {
   const sprint = resolveSprint(status, action);
-  const relativePath = `.harness/qa/sprint-${sprint}-fix-log.md`;
+  const relativePath = harnessPath(harnessDir, "qa", `sprint-${sprint}-fix-log.md`);
   if (!fileExists(projectRoot, relativePath)) {
     fail(action, "generator_fix did not produce the current sprint fix log.", { sprint, missing: [relativePath] });
   }
@@ -231,7 +253,7 @@ if (action === "generator_fix") {
 
 if (action === "generator_fix_parallel") {
   const sprint = resolveSprint(status, action);
-  const relativePath = `.harness/qa/sprint-${sprint}-fix-log.md`;
+  const relativePath = harnessPath(harnessDir, "qa", `sprint-${sprint}-fix-log.md`);
   if (!fileExists(projectRoot, relativePath)) {
     fail(action, "generator_fix did not produce the current sprint fix log.", { sprint, missing: [relativePath] });
   }
@@ -240,7 +262,7 @@ if (action === "generator_fix_parallel") {
 
 if (action === "evaluator_review" || action === "evaluator_review_parallel") {
   const sprint = resolveSprint(status, action);
-  const relativePath = `.harness/contracts/sprint-${sprint}-review.md`;
+  const relativePath = harnessPath(harnessDir, "contracts", `sprint-${sprint}-review.md`);
   if (!fileExists(projectRoot, relativePath)) {
     fail(action, "evaluator_review did not produce the current sprint review.", { sprint, missing: [relativePath] });
   }

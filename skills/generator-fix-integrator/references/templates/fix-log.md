@@ -9,7 +9,7 @@ kind: template
 # Sprint XX Fix Log
 
 ## Source QA Report
-- report: `.harness/qa/sprint-XX-qa-report.md`
+- report: `.harness-parallel/qa/sprint-XX-qa-report.md`
 
 ## Fixes Applied
 | Bug ID | Change | Files | Notes |

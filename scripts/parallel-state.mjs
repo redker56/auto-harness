@@ -3,7 +3,8 @@ import path from "node:path";
 import process from "node:process";
 import {
   CONTRACT_GRAPH_HEADING,
-  STATUS_FILE,
+  PARALLEL_HARNESS_DIR,
+  harnessPath,
   readJsonSectionFromMarkdownFileResult,
   readStatusDocument,
   readStatusParallelState,
@@ -23,6 +24,10 @@ function printJson(value) {
 
 function resolveProjectRoot(rawValue) {
   return path.resolve(rawValue || process.cwd());
+}
+
+function resolveHarnessDir(rawValue) {
+  return rawValue || PARALLEL_HARNESS_DIR;
 }
 
 function normalizeNodeDefinitions(parallelState) {
@@ -50,7 +55,7 @@ function normalizeNodeDefinitions(parallelState) {
   }));
 }
 
-function readGraphFromState(projectRoot, parallelState) {
+function readGraphFromState(projectRoot, parallelState, harnessDir = PARALLEL_HARNESS_DIR) {
   const nodeDefinitions = normalizeNodeDefinitions(parallelState);
   if (nodeDefinitions) {
     return {
@@ -64,7 +69,8 @@ function readGraphFromState(projectRoot, parallelState) {
     return { kind: null, data: null, validation: { errors: ["parallel state is missing graph_source."], nodes: [] } };
   }
   const absolutePath = path.resolve(projectRoot, graphSource);
-  if (absolutePath.includes(`${path.sep}.harness${path.sep}qa${path.sep}`)) {
+  const qaSegment = `${path.sep}${harnessDir}${path.sep}qa${path.sep}`;
+  if (absolutePath.includes(qaSegment)) {
     return {
       kind: "fix",
       data: null,
@@ -132,29 +138,31 @@ if (command === "graph-build") {
 
 if (command === "status") {
   const projectRoot = resolveProjectRoot(process.argv[3]);
-  const status = readStatusDocument(projectRoot);
+  const harnessDir = resolveHarnessDir(process.argv[4]);
+  const status = readStatusDocument(projectRoot, harnessDir);
   printJson({
     exists: Boolean(status),
     projectRoot,
-    statusPath: path.join(projectRoot, STATUS_FILE),
+    statusPath: path.join(projectRoot, harnessPath(harnessDir, "status.md")),
     frontmatter: status?.frontmatter ?? null,
-    parallel_state: readStatusParallelState(projectRoot),
+    parallel_state: readStatusParallelState(projectRoot, harnessDir),
   });
   process.exit(0);
 }
 
 if (command === "ready") {
   const projectRoot = resolveProjectRoot(process.argv[3]);
-  const parallelState = readStatusParallelState(projectRoot);
+  const harnessDir = resolveHarnessDir(process.argv[4]);
+  const parallelState = readStatusParallelState(projectRoot, harnessDir);
   if (!parallelState) {
     printJson({
       ok: false,
       projectRoot,
-      reason: "Parallel execution state not found in .harness/status.md.",
+      reason: `Parallel execution state not found in ${harnessPath(harnessDir, "status.md")}.`,
     });
     process.exit(1);
   }
-  const graph = readGraphFromState(projectRoot, parallelState);
+  const graph = readGraphFromState(projectRoot, parallelState, harnessDir);
   if (graph.validation.errors.length > 0) {
     printJson({
       ok: false,
@@ -179,12 +187,13 @@ if (command === "ready") {
 
 if (command === "all-merged") {
   const projectRoot = resolveProjectRoot(process.argv[3]);
-  const parallelState = readStatusParallelState(projectRoot);
+  const harnessDir = resolveHarnessDir(process.argv[4]);
+  const parallelState = readStatusParallelState(projectRoot, harnessDir);
   if (!parallelState) {
     printJson({ ok: false, projectRoot, reason: "Parallel execution state not found." });
     process.exit(1);
   }
-  const graph = readGraphFromState(projectRoot, parallelState);
+  const graph = readGraphFromState(projectRoot, parallelState, harnessDir);
   if (graph.validation.errors.length > 0) {
     printJson({
       ok: false,

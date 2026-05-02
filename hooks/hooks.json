@@ -48,11 +48,31 @@
         ]
       },
       {
+        "matcher": "auto-harness:planner-clarify-parallel-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:planner-clarify-parallel-agent",
+            "async": false
+          }
+        ]
+      },
+      {
         "matcher": "auto-harness:planner-spec-draft-agent",
         "hooks": [
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:planner-spec-draft-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:planner-spec-draft-parallel-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:planner-spec-draft-parallel-agent",
             "async": false
           }
         ]
@@ -168,6 +188,16 @@
         ]
       },
       {
+        "matcher": "auto-harness:evaluator-write-qa-parallel-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:evaluator-write-qa-parallel-agent",
+            "async": false
+          }
+        ]
+      },
+      {
         "matcher": "auto-harness:evaluator-write-retest-agent",
         "hooks": [
           {
@@ -178,11 +208,31 @@
         ]
       },
       {
+        "matcher": "auto-harness:evaluator-write-retest-parallel-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:evaluator-write-retest-parallel-agent",
+            "async": false
+          }
+        ]
+      },
+      {
         "matcher": "auto-harness:evaluator-write-final-agent",
         "hooks": [
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:evaluator-write-final-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:evaluator-write-final-parallel-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-start auto-harness:evaluator-write-final-parallel-agent",
             "async": false
           }
         ]
@@ -230,11 +280,31 @@
         ]
       },
       {
+        "matcher": "auto-harness:planner-clarify-parallel-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:planner-clarify-parallel-agent",
+            "async": false
+          }
+        ]
+      },
+      {
         "matcher": "auto-harness:planner-spec-draft-agent",
         "hooks": [
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:planner-spec-draft-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:planner-spec-draft-parallel-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:planner-spec-draft-parallel-agent",
             "async": false
           }
         ]
@@ -350,6 +420,16 @@
         ]
       },
       {
+        "matcher": "auto-harness:evaluator-write-qa-parallel-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:evaluator-write-qa-parallel-agent",
+            "async": false
+          }
+        ]
+      },
+      {
         "matcher": "auto-harness:evaluator-write-retest-agent",
         "hooks": [
           {
@@ -360,11 +440,31 @@
         ]
       },
       {
+        "matcher": "auto-harness:evaluator-write-retest-parallel-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:evaluator-write-retest-parallel-agent",
+            "async": false
+          }
+        ]
+      },
+      {
         "matcher": "auto-harness:evaluator-write-final-agent",
         "hooks": [
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:evaluator-write-final-agent",
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "auto-harness:evaluator-write-final-parallel-agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/root-guard.mjs\" subagent-stop auto-harness:evaluator-write-final-parallel-agent",
             "async": false
           }
         ]

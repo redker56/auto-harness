@@ -10,12 +10,12 @@ This skill governs Generator **contract mode**.
 
 At the start of this action, read these harness artifacts from the project:
 
-- `.harness/status.md`
-- `.harness/intake.md`
-- `.harness/spec.md`
-- `.harness/design-direction.md`
-- `.harness/contracts/sprint-XX-contract.md` when revising the current sprint contract.
-- `.harness/contracts/sprint-XX-review.md` when a prior review exists for the current sprint.
+- `.harness-parallel/status.md`
+- `.harness-parallel/intake.md`
+- `.harness-parallel/spec.md`
+- `.harness-parallel/design-direction.md`
+- `.harness-parallel/contracts/sprint-XX-contract.md` when revising the current sprint contract.
+- `.harness-parallel/contracts/sprint-XX-review.md` when a prior review exists for the current sprint.
 
 Then inspect the current project implementation relevant to this action:
 
@@ -29,7 +29,7 @@ Then read these skill references:
 
 Follow these rules:
 
-- Treat `.harness/intake.md`, `.harness/spec.md`, the current sprint contract, and any current-sprint review artifact as authoritative inputs.
+- Treat `.harness-parallel/intake.md`, `.harness-parallel/spec.md`, the current sprint contract, and any current-sprint review artifact as authoritative inputs.
 - Write only the current sprint contract artifact.
 - If a review file already exists for the sprint, revise the contract directly against it.
 - Do not move the sprint toward implementation while the current sprint review result remains `REVISE`.

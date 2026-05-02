@@ -4,7 +4,10 @@ import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import {
+  PARALLEL_HARNESS_DIR,
+  SERIAL_HARNESS_DIR,
   formatSprintNumber,
+  harnessPath,
   readJsonSectionFromMarkdownFile,
   readStatusDocument,
   readStatusParallelState,
@@ -30,15 +33,15 @@ const PARALLEL_ACTION_AGENT_POLICY = new Map([
   [
     "brief_clarification_parallel",
     {
-      agents: new Set(["auto-harness:planner-clarify-agent"]),
-      harnessWriters: new Set(["auto-harness:planner-clarify-agent"]),
+      agents: new Set(["auto-harness:planner-clarify-parallel-agent"]),
+      harnessWriters: new Set(["auto-harness:planner-clarify-parallel-agent"]),
     },
   ],
   [
     "spec_draft_parallel",
     {
-      agents: new Set(["auto-harness:planner-spec-draft-agent"]),
-      harnessWriters: new Set(["auto-harness:planner-spec-draft-agent"]),
+      agents: new Set(["auto-harness:planner-spec-draft-parallel-agent"]),
+      harnessWriters: new Set(["auto-harness:planner-spec-draft-parallel-agent"]),
     },
   ],
   [
@@ -69,8 +72,8 @@ const PARALLEL_ACTION_AGENT_POLICY = new Map([
   [
     "evaluator_qa_parallel",
     {
-      agents: new Set(["auto-harness:evaluator-write-qa-agent"]),
-      harnessWriters: new Set(["auto-harness:evaluator-write-qa-agent"]),
+      agents: new Set(["auto-harness:evaluator-write-qa-parallel-agent"]),
+      harnessWriters: new Set(["auto-harness:evaluator-write-qa-parallel-agent"]),
     },
   ],
   [
@@ -87,18 +90,35 @@ const PARALLEL_ACTION_AGENT_POLICY = new Map([
   [
     "evaluator_retest_parallel",
     {
-      agents: new Set(["auto-harness:evaluator-write-retest-agent"]),
-      harnessWriters: new Set(["auto-harness:evaluator-write-retest-agent"]),
+      agents: new Set(["auto-harness:evaluator-write-retest-parallel-agent"]),
+      harnessWriters: new Set(["auto-harness:evaluator-write-retest-parallel-agent"]),
     },
   ],
   [
     "evaluator_final_parallel",
     {
-      agents: new Set(["auto-harness:evaluator-write-final-agent"]),
-      harnessWriters: new Set(["auto-harness:evaluator-write-final-agent"]),
+      agents: new Set(["auto-harness:evaluator-write-final-parallel-agent"]),
+      harnessWriters: new Set(["auto-harness:evaluator-write-final-parallel-agent"]),
     },
   ],
 ]);
+
+const SHARED_AGENT_NAMES = new Set([
+  "auto-harness:planner-clarify-agent",
+  "auto-harness:planner-spec-draft-agent",
+  "auto-harness:evaluator-write-qa-agent",
+  "auto-harness:evaluator-write-retest-agent",
+  "auto-harness:evaluator-write-final-agent",
+  "auto-harness:qa-report-reviewer-agent",
+  "auto-harness:retest-report-reviewer-agent",
+  "auto-harness:final-report-reviewer-agent",
+]);
+
+const PARALLEL_ONLY_AGENT_NAMES = new Set(
+  [...PARALLEL_ACTION_AGENT_POLICY.values()]
+    .flatMap((policy) => [...policy.agents])
+    .filter((agentName) => !SHARED_AGENT_NAMES.has(agentName)),
+);
 
 function normalizePath(value) {
   return String(value ?? "").replace(/\\/g, "/");
@@ -193,6 +213,35 @@ function relativeProjectPath(projectRoot, filePath) {
   return normalizePath(path.relative(projectRoot, filePath));
 }
 
+function modeForHarnessDir(harnessDir) {
+  return harnessDir === PARALLEL_HARNESS_DIR ? "parallel" : "serial";
+}
+
+function harnessDirForRelativePath(relativePath) {
+  if (relativePath === SERIAL_HARNESS_DIR || relativePath.startsWith(`${SERIAL_HARNESS_DIR}/`)) {
+    return SERIAL_HARNESS_DIR;
+  }
+  if (relativePath === PARALLEL_HARNESS_DIR || relativePath.startsWith(`${PARALLEL_HARNESS_DIR}/`)) {
+    return PARALLEL_HARNESS_DIR;
+  }
+  return null;
+}
+
+function harnessDirForAgent(activeAgent, relativePath) {
+  const targetHarnessDir = harnessDirForRelativePath(relativePath);
+  if (targetHarnessDir) {
+    return targetHarnessDir;
+  }
+  if (PARALLEL_ONLY_AGENT_NAMES.has(activeAgent)) {
+    return PARALLEL_HARNESS_DIR;
+  }
+  return SERIAL_HARNESS_DIR;
+}
+
+function isParallelAction(action) {
+  return String(action ?? "").endsWith("_parallel");
+}
+
 function resolveTargetFilePath(projectRoot, payload) {
   const rawPath = payload?.tool_input?.file_path;
   if (!rawPath) {
@@ -219,7 +268,7 @@ function requireSprint(status) {
   return formatSprintNumber(parsed);
 }
 
-function resolveEffectiveAction(status, activeAgent) {
+function resolveEffectiveAction(status, activeAgent, harnessDir = SERIAL_HARNESS_DIR) {
   const pendingAction = status?.frontmatter?.pending_action;
   // Planner spec drafting is dispatched while status is still in the approval-oriented planner lane.
   if (
@@ -229,7 +278,7 @@ function resolveEffectiveAction(status, activeAgent) {
     return "spec_draft";
   }
   if (
-    activeAgent === "auto-harness:planner-spec-draft-agent" &&
+    activeAgent === "auto-harness:planner-spec-draft-parallel-agent" &&
     ["brief_clarification_parallel", "spec_approval_parallel", "spec_draft_parallel"].includes(
       String(pendingAction ?? ""),
     )
@@ -250,6 +299,9 @@ function resolveEffectiveAction(status, activeAgent) {
   }
   if (!status && activeAgent === "auto-harness:planner-clarify-agent") {
     return "brief_clarification";
+  }
+  if (!status && activeAgent === "auto-harness:planner-clarify-parallel-agent") {
+    return "brief_clarification_parallel";
   }
   return null;
 }
@@ -276,7 +328,7 @@ function normalizeParallelNode(rawNode) {
   };
 }
 
-function readParallelNodes(projectRoot, parallelState) {
+function readParallelNodes(projectRoot, parallelState, harnessDir = PARALLEL_HARNESS_DIR) {
   if (Array.isArray(parallelState?.node_definitions) && parallelState.node_definitions.length) {
     return parallelState.node_definitions.map(normalizeParallelNode);
   }
@@ -284,7 +336,7 @@ function readParallelNodes(projectRoot, parallelState) {
     return [];
   }
   const absolutePath = path.resolve(projectRoot, parallelState.graph_source);
-  if (absolutePath.includes(`${path.sep}.harness${path.sep}qa${path.sep}`)) {
+  if (absolutePath.includes(`${path.sep}${harnessDir}${path.sep}qa${path.sep}`)) {
     return [];
   }
   const data = readJsonSectionFromMarkdownFile(absolutePath, CONTRACT_GRAPH_HEADING);
@@ -330,104 +382,108 @@ function resolveWorkerNode(projectRoot, parallelState, activeAgent) {
   return match ? match.node_id : null;
 }
 
-function allParallelNodesMerged(projectRoot, parallelState) {
-  const nodes = readParallelNodes(projectRoot, parallelState);
+function allParallelNodesMerged(projectRoot, parallelState, harnessDir = PARALLEL_HARNESS_DIR) {
+  const nodes = readParallelNodes(projectRoot, parallelState, harnessDir);
   if (!nodes.length) {
     return false;
   }
   return nodes.every((node) => parallelState.nodes?.[node.id] === "merged");
 }
 
-function resolveWorkflowMode(status) {
-  return String(status?.frontmatter?.workflow_mode ?? "serial").trim().toLowerCase() === "parallel"
-    ? "parallel"
-    : "serial";
-}
-
-function allowedRelativePathsForParallelAction(action, sprint, activeAgent, projectRoot, parallelState) {
+function allowedRelativePathsForParallelAction(action, sprint, activeAgent, projectRoot, parallelState, harnessDir) {
   const policy = PARALLEL_ACTION_AGENT_POLICY.get(action);
   const canWriteHarness = Boolean(policy?.harnessWriters?.has(activeAgent));
   switch (action) {
     case "brief_clarification_parallel":
-      return new Set([".harness/intake.md", ".harness/status.md"]);
+      return new Set([harnessPath(harnessDir, "intake.md"), harnessPath(harnessDir, "status.md")]);
     case "spec_draft_parallel":
       return new Set([
-        ".harness/intake.md",
-        ".harness/status.md",
-        ".harness/spec.md",
-        ".harness/design-direction.md",
+        harnessPath(harnessDir, "intake.md"),
+        harnessPath(harnessDir, "status.md"),
+        harnessPath(harnessDir, "spec.md"),
+        harnessPath(harnessDir, "design-direction.md"),
       ]);
     case "generator_contract_parallel":
-      return new Set([`.harness/contracts/sprint-${sprint}-contract.md`]);
+      return new Set([harnessPath(harnessDir, "contracts", `sprint-${sprint}-contract.md`)]);
     case "generator_build_parallel":
-      return canWriteHarness && allParallelNodesMerged(projectRoot, parallelState)
+      return canWriteHarness && allParallelNodesMerged(projectRoot, parallelState, harnessDir)
         ? new Set([
-            ".harness/runtime.md",
-            `.harness/qa/sprint-${sprint}-self-check.md`,
+            harnessPath(harnessDir, "runtime.md"),
+            harnessPath(harnessDir, "qa", `sprint-${sprint}-self-check.md`),
           ])
         : new Set();
     case "generator_fix_parallel":
-      return canWriteHarness && allParallelNodesMerged(projectRoot, parallelState)
+      return canWriteHarness && allParallelNodesMerged(projectRoot, parallelState, harnessDir)
         ? new Set([
-            ".harness/runtime.md",
-            `.harness/qa/sprint-${sprint}-fix-log.md`,
+            harnessPath(harnessDir, "runtime.md"),
+            harnessPath(harnessDir, "qa", `sprint-${sprint}-fix-log.md`),
           ])
         : new Set();
     case "evaluator_review_parallel":
-      return new Set([`.harness/contracts/sprint-${sprint}-review.md`]);
+      return new Set([harnessPath(harnessDir, "contracts", `sprint-${sprint}-review.md`)]);
     case "evaluator_qa_parallel":
-      return new Set([`.harness/qa/sprint-${sprint}-qa-report.md`]);
+      return new Set([harnessPath(harnessDir, "qa", `sprint-${sprint}-qa-report.md`)]);
     case "evaluator_retest_parallel":
-      return new Set([`.harness/qa/sprint-${sprint}-retest.md`]);
+      return new Set([harnessPath(harnessDir, "qa", `sprint-${sprint}-retest.md`)]);
     case "evaluator_final_parallel":
-      return new Set([".harness/final/qa-final-report.md"]);
+      return new Set([harnessPath(harnessDir, "final", "qa-final-report.md")]);
     default:
       return new Set();
   }
 }
 
-function allowedRelativePathsForSerialAction(action, sprint) {
+function allowedRelativePathsForSerialAction(action, sprint, harnessDir = SERIAL_HARNESS_DIR) {
   switch (action) {
     case "brief_clarification":
-      return new Set([".harness/intake.md", ".harness/status.md"]);
+      return new Set([harnessPath(harnessDir, "intake.md"), harnessPath(harnessDir, "status.md")]);
     case "spec_draft":
       return new Set([
-        ".harness/intake.md",
-        ".harness/status.md",
-        ".harness/spec.md",
-        ".harness/design-direction.md",
+        harnessPath(harnessDir, "intake.md"),
+        harnessPath(harnessDir, "status.md"),
+        harnessPath(harnessDir, "spec.md"),
+        harnessPath(harnessDir, "design-direction.md"),
       ]);
     case "generator_contract":
-      return new Set([`.harness/contracts/sprint-${sprint}-contract.md`]);
+      return new Set([harnessPath(harnessDir, "contracts", `sprint-${sprint}-contract.md`)]);
     case "generator_build":
       return new Set([
-        ".harness/runtime.md",
-        `.harness/qa/sprint-${sprint}-self-check.md`,
+        harnessPath(harnessDir, "runtime.md"),
+        harnessPath(harnessDir, "qa", `sprint-${sprint}-self-check.md`),
       ]);
     case "generator_fix":
       return new Set([
-        ".harness/runtime.md",
-        `.harness/qa/sprint-${sprint}-fix-log.md`,
+        harnessPath(harnessDir, "runtime.md"),
+        harnessPath(harnessDir, "qa", `sprint-${sprint}-fix-log.md`),
       ]);
     case "evaluator_review":
-      return new Set([`.harness/contracts/sprint-${sprint}-review.md`]);
+      return new Set([harnessPath(harnessDir, "contracts", `sprint-${sprint}-review.md`)]);
     case "evaluator_qa":
-      return new Set([`.harness/qa/sprint-${sprint}-qa-report.md`]);
+      return new Set([harnessPath(harnessDir, "qa", `sprint-${sprint}-qa-report.md`)]);
     case "evaluator_retest":
-      return new Set([`.harness/qa/sprint-${sprint}-retest.md`]);
+      return new Set([harnessPath(harnessDir, "qa", `sprint-${sprint}-retest.md`)]);
     case "evaluator_final":
-      return new Set([".harness/final/qa-final-report.md"]);
+      return new Set([harnessPath(harnessDir, "final", "qa-final-report.md")]);
     default:
       return new Set();
   }
 }
 
 function isRepoHarnessFile(relativePath) {
-  return relativePath.startsWith(".harness/");
+  return Boolean(harnessDirForRelativePath(relativePath));
 }
 
 function allowedMainThreadPaths() {
-  return new Set([".harness/status.md", ".harness/checkpoints/latest.md"]);
+  return new Set([
+    harnessPath(SERIAL_HARNESS_DIR, "status.md"),
+    harnessPath(SERIAL_HARNESS_DIR, "checkpoints", "latest.md"),
+    harnessPath(PARALLEL_HARNESS_DIR, "status.md"),
+    harnessPath(PARALLEL_HARNESS_DIR, "checkpoints", "latest.md"),
+  ].map(normalizePath));
+}
+
+function allowedPathSetHas(allowedPaths, relativePath) {
+  const normalizedRelativePath = normalizePath(relativePath);
+  return [...allowedPaths].some((allowedPath) => normalizePath(allowedPath) === normalizedRelativePath);
 }
 
 const mode = process.argv[2];
@@ -468,18 +524,19 @@ if (!activeAgent) {
     allow();
   }
   deny(
-    `Auto-Harness blocked repo write to ${relativePath}: the main thread may not edit .harness/ artifacts other than .harness/status.md or .harness/checkpoints/latest.md.`,
+    `Auto-Harness blocked repo write to ${relativePath}: the main thread may not edit harness artifacts other than status.md or checkpoints/latest.md.`,
   );
 }
 
-const status = readStatusDocument(projectRoot);
-const effectiveAction = resolveEffectiveAction(status, activeAgent);
+const harnessDir = harnessDirForAgent(activeAgent, relativePath);
+const status = readStatusDocument(projectRoot, harnessDir);
+const effectiveAction = resolveEffectiveAction(status, activeAgent, harnessDir);
 if (!effectiveAction) {
   deny(`Auto-Harness blocked repo write to ${relativePath}: pending_action does not authorize any writer action.`);
 }
 
-const workflowMode = resolveWorkflowMode(status);
-if (workflowMode === "parallel") {
+const workflowMode = modeForHarnessDir(harnessDir);
+if (isParallelAction(effectiveAction)) {
   const policy = PARALLEL_ACTION_AGENT_POLICY.get(effectiveAction);
   if (policy && !policy.agents.has(activeAgent)) {
     deny(
@@ -495,8 +552,8 @@ if (workflowMode === "parallel") {
   }
 }
 
-const parallelState = readStatusParallelState(projectRoot);
-const parallelPolicy = workflowMode === "parallel"
+const parallelState = readStatusParallelState(projectRoot, harnessDir);
+const parallelPolicy = isParallelAction(effectiveAction)
   ? PARALLEL_ACTION_AGENT_POLICY.get(effectiveAction)
   : null;
 const isParallelWorker = Boolean(parallelPolicy?.workerAgents?.has(activeAgent));
@@ -510,9 +567,9 @@ if (isParallelWorker && !workerNodeId) {
 }
 if (workerNodeId) {
   if (isRepoHarnessFile(relativePath)) {
-    deny(`Auto-Harness blocked repo write to ${relativePath}: worker agents may not modify .harness snapshots.`);
+    deny(`Auto-Harness blocked repo write to ${relativePath}: worker agents may not modify harness snapshots.`);
   }
-  const nodes = readParallelNodes(projectRoot, parallelState);
+  const nodes = readParallelNodes(projectRoot, parallelState, harnessDir);
   const node = nodes.find((entry) => entry.id === workerNodeId);
   if (!node) {
     deny(`Auto-Harness blocked repo write to ${relativePath}: worker node metadata for ${workerNodeId} is missing.`);
@@ -571,9 +628,10 @@ const allowedPaths = workflowMode === "parallel"
       activeAgent,
       projectRoot,
       parallelState,
+      harnessDir,
     )
-  : allowedRelativePathsForSerialAction(effectiveAction, sprint);
-if (allowedPaths.has(relativePath)) {
+  : allowedRelativePathsForSerialAction(effectiveAction, sprint, harnessDir);
+if (allowedPathSetHas(allowedPaths, relativePath)) {
   allow();
 }
 

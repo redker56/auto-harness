@@ -10,14 +10,14 @@ This skill governs Generator **build integration mode**.
 
 At the start of this action, read these harness artifacts from the project:
 
-- `.harness/status.md`
-- `.harness/intake.md`
-- `.harness/spec.md`
-- `.harness/design-direction.md`
-- `.harness/contracts/sprint-XX-contract.md`
-- `.harness/contracts/sprint-XX-review.md` when it exists for the current sprint.
-- `.harness/runtime.md` when revising an existing runtime contract.
-- `.harness/qa/sprint-XX-self-check.md` when revising an existing self-check.
+- `.harness-parallel/status.md`
+- `.harness-parallel/intake.md`
+- `.harness-parallel/spec.md`
+- `.harness-parallel/design-direction.md`
+- `.harness-parallel/contracts/sprint-XX-contract.md`
+- `.harness-parallel/contracts/sprint-XX-review.md` when it exists for the current sprint.
+- `.harness-parallel/runtime.md` when revising an existing runtime contract.
+- `.harness-parallel/qa/sprint-XX-self-check.md` when revising an existing self-check.
 
 Then inspect the current project implementation relevant to this action:
 
@@ -33,11 +33,11 @@ Then read these skill references:
 Follow these rules:
 
 - Merge only the worker branches the Orchestrator names for the current pass.
-- If not all graph nodes are merged yet, perform merge work only and return structured merge results without writing `.harness/runtime.md` or the sprint self-check.
+- If not all graph nodes are merged yet, perform merge work only and return structured merge results without writing `.harness-parallel/runtime.md` or the sprint self-check.
 - Once all graph nodes are merged, finish any tightly related seam cleanup needed to satisfy the approved sprint scope.
 - Treat the current sprint review, when present, as implementation guidance even if the verdict is already `APPROVED`.
 - Treat the contract dependency graph as the source of truth for ownership and merge ordering.
-- Update `.harness/runtime.md` so Evaluator can start and verify the app.
+- Update `.harness-parallel/runtime.md` so Evaluator can start and verify the app.
 - Make `runtime.md` sufficient for Evaluator to install, start, and health-check the app without follow-up questions.
 - Produce the current sprint self-check before handoff.
 - Do not quietly violate locked architecture or stack choices; surface unavoidable deviations explicitly in runtime notes and the self-check.

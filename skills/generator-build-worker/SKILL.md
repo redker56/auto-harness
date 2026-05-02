@@ -10,12 +10,12 @@ This skill governs a worktree-bound Generator **build worker**.
 
 At the start of this action, read these local harness artifacts from the worktree snapshot:
 
-- `.harness/status.md`
-- `.harness/intake.md`
-- `.harness/spec.md`
-- `.harness/design-direction.md`
-- `.harness/contracts/sprint-XX-contract.md`
-- `.harness/contracts/sprint-XX-review.md` when it exists for the current sprint
+- `.harness-parallel/status.md`
+- `.harness-parallel/intake.md`
+- `.harness-parallel/spec.md`
+- `.harness-parallel/design-direction.md`
+- `.harness-parallel/contracts/sprint-XX-contract.md`
+- `.harness-parallel/contracts/sprint-XX-review.md` when it exists for the current sprint
 
 Then inspect the current project implementation relevant to this action:
 
@@ -27,7 +27,7 @@ Follow these rules:
 
 - Implement only the assigned dependency-graph node.
 - Modify only the owned files or globs named by the Orchestrator.
-- Do not modify `.harness/` files.
+- Do not modify `.harness-parallel/` files.
 - Run targeted verification for your node before finishing.
 - Make a local git commit in this worktree.
 - If your task cannot be completed without touching an unowned path, stop short of freelancing and report the blocker clearly.

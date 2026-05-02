@@ -4,6 +4,8 @@ import path from "node:path";
 import process from "node:process";
 import { spawnSync } from "node:child_process";
 
+const DEFAULT_HARNESS_DIR = ".harness-parallel";
+
 function usage() {
   console.error(
     "Usage: worktree-manager.mjs <add|snapshot|remove|prune|head> [args...]",
@@ -56,9 +58,9 @@ function walkRecursive(rootPath, visitor) {
   }
 }
 
-function copyHarnessSnapshot(projectRoot, worktreePath) {
-  const source = path.join(projectRoot, ".harness");
-  const target = path.join(worktreePath, ".harness");
+function copyHarnessSnapshot(projectRoot, worktreePath, harnessDir = DEFAULT_HARNESS_DIR) {
+  const source = path.join(projectRoot, harnessDir);
+  const target = path.join(worktreePath, harnessDir);
   fs.rmSync(target, { recursive: true, force: true });
   if (!fs.existsSync(source)) {
     fs.mkdirSync(target, { recursive: true });
@@ -71,8 +73,8 @@ function copyHarnessSnapshot(projectRoot, worktreePath) {
   return { copied: true, source, target };
 }
 
-function cleanupHarnessSnapshot(worktreePath) {
-  const target = path.join(worktreePath, ".harness");
+function cleanupHarnessSnapshot(worktreePath, harnessDir = DEFAULT_HARNESS_DIR) {
+  const target = path.join(worktreePath, harnessDir);
   if (!fs.existsSync(target)) {
     return false;
   }
@@ -110,14 +112,16 @@ if (command === "add") {
 if (command === "snapshot") {
   const projectRoot = resolveAbsolute(process.argv[3]);
   const worktreePath = resolveAbsolute(process.argv[4]);
+  const harnessDir = process.argv[5] || DEFAULT_HARNESS_DIR;
   if (!projectRoot || !worktreePath) {
     usage();
   }
-  const snapshot = copyHarnessSnapshot(projectRoot, worktreePath);
+  const snapshot = copyHarnessSnapshot(projectRoot, worktreePath, harnessDir);
   printJson({
     ok: true,
     projectRoot,
     worktreePath,
+    harnessDir,
     ...snapshot,
   });
   process.exit(0);
@@ -126,14 +130,16 @@ if (command === "snapshot") {
 if (command === "remove") {
   const projectRoot = resolveAbsolute(process.argv[3]);
   const worktreePath = resolveAbsolute(process.argv[4]);
+  const harnessDir = process.argv[5] || DEFAULT_HARNESS_DIR;
   if (!projectRoot || !worktreePath) {
     usage();
   }
-  const cleanedHarnessSnapshot = cleanupHarnessSnapshot(worktreePath);
+  const cleanedHarnessSnapshot = cleanupHarnessSnapshot(worktreePath, harnessDir);
   const result = runGit(projectRoot, ["worktree", "remove", "--force", worktreePath]);
   printJson({
     projectRoot,
     worktreePath,
+    harnessDir,
     cleanedHarnessSnapshot,
     ...result,
   });

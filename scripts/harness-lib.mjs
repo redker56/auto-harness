@@ -3,11 +3,23 @@ import path from "node:path";
 import http from "node:http";
 import https from "node:https";
 
-export const STATUS_FILE = path.join(".harness", "status.md");
-export const RUNTIME_FILE = path.join(".harness", "runtime.md");
-export const CHECKPOINT_FILE = path.join(".harness", "checkpoints", "latest.md");
+export const SERIAL_HARNESS_DIR = ".harness";
+export const PARALLEL_HARNESS_DIR = ".harness-parallel";
+export const STATUS_FILE = path.join(SERIAL_HARNESS_DIR, "status.md");
+export const RUNTIME_FILE = path.join(SERIAL_HARNESS_DIR, "runtime.md");
+export const CHECKPOINT_FILE = path.join(SERIAL_HARNESS_DIR, "checkpoints", "latest.md");
 export const PARALLEL_STATE_HEADING = "## Parallel Execution State";
 export const CONTRACT_GRAPH_HEADING = "## Dependency Graph JSON";
+
+export function harnessDirForAction(actionName) {
+  return String(actionName ?? "").endsWith("_parallel")
+    ? PARALLEL_HARNESS_DIR
+    : SERIAL_HARNESS_DIR;
+}
+
+export function harnessPath(harnessDir, ...segments) {
+  return path.join(harnessDir || SERIAL_HARNESS_DIR, ...segments);
+}
 
 function stripQuotes(value) {
   if (
@@ -96,29 +108,29 @@ export function writeMarkdownDocument(filePath, frontmatter, body) {
   fs.writeFileSync(filePath, output, "utf8");
 }
 
-export function ensureHarnessDirs(projectRoot) {
+export function ensureHarnessDirs(projectRoot, harnessDir = SERIAL_HARNESS_DIR) {
   const dirs = [
-    path.join(projectRoot, ".harness"),
-    path.join(projectRoot, ".harness", "contracts"),
-    path.join(projectRoot, ".harness", "qa"),
-    path.join(projectRoot, ".harness", "final"),
-    path.join(projectRoot, ".harness", "checkpoints"),
+    path.join(projectRoot, harnessDir),
+    path.join(projectRoot, harnessDir, "contracts"),
+    path.join(projectRoot, harnessDir, "qa"),
+    path.join(projectRoot, harnessDir, "final"),
+    path.join(projectRoot, harnessDir, "checkpoints"),
   ];
   for (const dir of dirs) {
     fs.mkdirSync(dir, { recursive: true });
   }
 }
 
-export function readStatusDocument(projectRoot) {
-  const filePath = path.join(projectRoot, STATUS_FILE);
+export function readStatusDocument(projectRoot, harnessDir = SERIAL_HARNESS_DIR) {
+  const filePath = path.join(projectRoot, harnessPath(harnessDir, "status.md"));
   if (!fs.existsSync(filePath)) {
     return null;
   }
   return { path: filePath, ...readMarkdownDocument(filePath) };
 }
 
-export function readRuntimeDocument(projectRoot) {
-  const filePath = path.join(projectRoot, RUNTIME_FILE);
+export function readRuntimeDocument(projectRoot, harnessDir = SERIAL_HARNESS_DIR) {
+  const filePath = path.join(projectRoot, harnessPath(harnessDir, "runtime.md"));
   if (!fs.existsSync(filePath)) {
     return null;
   }
@@ -225,8 +237,8 @@ export function upsertJsonSection(body, heading, data) {
   return `${trimmed}\n\n${renderedSection}\n`;
 }
 
-export function readStatusParallelState(projectRoot) {
-  const status = readStatusDocument(projectRoot);
+export function readStatusParallelState(projectRoot, harnessDir = PARALLEL_HARNESS_DIR) {
+  const status = readStatusDocument(projectRoot, harnessDir);
   if (!status) {
     return null;
   }
@@ -428,26 +440,26 @@ function excerptFile(filePath, maxLines = 20) {
   return lines.join("\n").trim();
 }
 
-export function writeCheckpoint(projectRoot, source = "auto") {
-  ensureHarnessDirs(projectRoot);
-  const status = readStatusDocument(projectRoot);
+export function writeCheckpoint(projectRoot, source = "auto", harnessDir = SERIAL_HARNESS_DIR) {
+  ensureHarnessDirs(projectRoot, harnessDir);
+  const status = readStatusDocument(projectRoot, harnessDir);
   if (!status) {
     return null;
   }
 
   const sprint = formatSprintNumber(status.frontmatter.current_sprint);
   const relatedFiles = [
-    path.join(projectRoot, ".harness", "intake.md"),
-    path.join(projectRoot, ".harness", "spec.md"),
-    path.join(projectRoot, ".harness", "design-direction.md"),
-    path.join(projectRoot, ".harness", "runtime.md"),
-    path.join(projectRoot, ".harness", "contracts", `sprint-${sprint}-contract.md`),
-    path.join(projectRoot, ".harness", "contracts", `sprint-${sprint}-review.md`),
-    path.join(projectRoot, ".harness", "qa", `sprint-${sprint}-self-check.md`),
-    path.join(projectRoot, ".harness", "qa", `sprint-${sprint}-qa-report.md`),
-    path.join(projectRoot, ".harness", "qa", `sprint-${sprint}-fix-log.md`),
-    path.join(projectRoot, ".harness", "qa", `sprint-${sprint}-retest.md`),
-    path.join(projectRoot, ".harness", "final", "qa-final-report.md"),
+    path.join(projectRoot, harnessDir, "intake.md"),
+    path.join(projectRoot, harnessDir, "spec.md"),
+    path.join(projectRoot, harnessDir, "design-direction.md"),
+    path.join(projectRoot, harnessDir, "runtime.md"),
+    path.join(projectRoot, harnessDir, "contracts", `sprint-${sprint}-contract.md`),
+    path.join(projectRoot, harnessDir, "contracts", `sprint-${sprint}-review.md`),
+    path.join(projectRoot, harnessDir, "qa", `sprint-${sprint}-self-check.md`),
+    path.join(projectRoot, harnessDir, "qa", `sprint-${sprint}-qa-report.md`),
+    path.join(projectRoot, harnessDir, "qa", `sprint-${sprint}-fix-log.md`),
+    path.join(projectRoot, harnessDir, "qa", `sprint-${sprint}-retest.md`),
+    path.join(projectRoot, harnessDir, "final", "qa-final-report.md"),
   ];
 
   const sections = [
@@ -473,14 +485,14 @@ export function writeCheckpoint(projectRoot, source = "auto") {
     sections.push("```");
   }
 
-  const checkpointPath = path.join(projectRoot, CHECKPOINT_FILE);
+  const checkpointPath = path.join(projectRoot, harnessPath(harnessDir, "checkpoints", "latest.md"));
   fs.mkdirSync(path.dirname(checkpointPath), { recursive: true });
   fs.writeFileSync(checkpointPath, `${sections.join("\n")}\n`, "utf8");
   return checkpointPath;
 }
 
-export function readCheckpoint(projectRoot) {
-  const filePath = path.join(projectRoot, CHECKPOINT_FILE);
+export function readCheckpoint(projectRoot, harnessDir = SERIAL_HARNESS_DIR) {
+  const filePath = path.join(projectRoot, harnessPath(harnessDir, "checkpoints", "latest.md"));
   if (!fs.existsSync(filePath)) {
     return null;
   }

@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import process from "node:process";
 import {
+  PARALLEL_HARNESS_DIR,
+  SERIAL_HARNESS_DIR,
   readCheckpoint,
   readStatusDocument,
   statusSummary,
@@ -41,27 +43,47 @@ try {
 }
 
 const projectRoot = payload.cwd || process.cwd();
-const status = readStatusDocument(projectRoot);
+const statusEntries = [
+  { mode: "serial", command: "/auto-harness:harness", harnessDir: SERIAL_HARNESS_DIR },
+  { mode: "parallel", command: "/auto-harness:harness-parallel", harnessDir: PARALLEL_HARNESS_DIR },
+]
+  .map((entry) => ({
+    ...entry,
+    status: readStatusDocument(projectRoot, entry.harnessDir),
+  }))
+  .filter((entry) => Boolean(entry.status));
 
-if (!status) {
+if (!statusEntries.length) {
   printJson({});
   process.exit(0);
 }
 
 if (mode === "session-start") {
-  const checkpoint = readCheckpoint(projectRoot);
-  const checkpointExcerpt = checkpoint
-    ? checkpoint.split(/\r?\n/).slice(0, 18).join("\n").trim()
-    : "No checkpoint file yet.";
+  const blocks = [];
+  for (const entry of statusEntries) {
+    const checkpoint = readCheckpoint(projectRoot, entry.harnessDir);
+    const checkpointExcerpt = checkpoint
+      ? checkpoint.split(/\r?\n/).slice(0, 12).join("\n").trim()
+      : "No checkpoint file yet.";
+    blocks.push(
+      [
+        `Mode: ${entry.mode}`,
+        `Harness dir: ${entry.harnessDir}`,
+        `Resume command: ${entry.command}`,
+        statusSummary(entry.status.frontmatter),
+        "",
+        "Latest checkpoint excerpt:",
+        checkpointExcerpt,
+      ].join("\n"),
+    );
+  }
   const additionalContext = [
     "[Auto-Harness Session Context]",
     `Project root: ${projectRoot}`,
-    statusSummary(status.frontmatter),
     "",
-    "Latest checkpoint excerpt:",
-    checkpointExcerpt,
+    blocks.join("\n\n---\n\n"),
     "",
-    "If the user wants to resume the harness, continue from .harness/status.md rather than restarting planning.",
+    "If the user wants to resume a harness, continue from the matching harness directory and command rather than restarting planning.",
   ].join("\n");
 
   printJson({
@@ -74,12 +96,14 @@ if (mode === "session-start") {
 }
 
 if (mode === "pre-compact") {
-  const checkpointPath = writeCheckpoint(projectRoot, payload.source || "auto");
+  const checkpointPaths = statusEntries
+    .map((entry) => writeCheckpoint(projectRoot, payload.source || "auto", entry.harnessDir))
+    .filter(Boolean);
   printJson({
     hookSpecificOutput: {
       hookEventName: "PreCompact",
-      additionalContext: checkpointPath
-        ? `Auto-Harness refreshed ${checkpointPath} before compaction.`
+      additionalContext: checkpointPaths.length
+        ? `Auto-Harness refreshed ${checkpointPaths.join(", ")} before compaction.`
         : "Auto-Harness found no active status file during compaction.",
     },
   });

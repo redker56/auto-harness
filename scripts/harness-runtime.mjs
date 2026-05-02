@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import path from "node:path";
-import { httpGet, readRuntimeDocument } from "./harness-lib.mjs";
+import { httpGet, readRuntimeDocument, SERIAL_HARNESS_DIR } from "./harness-lib.mjs";
 
 function usage() {
-  console.error("Usage: harness-runtime.mjs <get|healthcheck> [projectRoot]");
+  console.error("Usage: harness-runtime.mjs <get|healthcheck> [projectRoot] [harnessDir]");
   process.exit(1);
 }
 
@@ -24,7 +24,8 @@ if (!command) {
 }
 
 const projectRoot = resolveProjectRoot(process.argv[3]);
-const runtime = readRuntimeDocument(projectRoot);
+const harnessDir = process.argv[4] || SERIAL_HARNESS_DIR;
+const runtime = readRuntimeDocument(projectRoot, harnessDir);
 
 if (command === "get") {
   if (!runtime) {
@@ -34,6 +35,7 @@ if (command === "get") {
   printJson({
     exists: true,
     projectRoot,
+    harnessDir,
     frontmatter: runtime.frontmatter,
     body: runtime.body,
   });
@@ -45,8 +47,9 @@ if (command === "healthcheck") {
     printJson({
       exists: false,
       ok: false,
-      reason: ".harness/runtime.md not found",
+      reason: `${harnessDir}/runtime.md not found`,
       projectRoot,
+      harnessDir,
     });
     process.exit(1);
   }
@@ -59,6 +62,7 @@ if (command === "healthcheck") {
       ok: false,
       reason: "Unsupported or missing healthcheck configuration",
       projectRoot,
+      harnessDir,
       frontmatter: runtime.frontmatter,
     });
     process.exit(1);
@@ -69,6 +73,7 @@ if (command === "healthcheck") {
     printJson({
       exists: true,
       projectRoot,
+      harnessDir,
       ...result,
     });
     process.exit(result.ok ? 0 : 1);
@@ -77,6 +82,7 @@ if (command === "healthcheck") {
       exists: true,
       ok: false,
       projectRoot,
+      harnessDir,
       reason: error instanceof Error ? error.message : String(error),
       frontmatter: runtime.frontmatter,
     });

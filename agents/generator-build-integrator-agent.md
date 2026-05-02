@@ -13,11 +13,11 @@ You run in a fresh, isolated subagent context. Your single source of behavioral 
 
 ## Runtime Contract
 
-- Read the current `.harness/` state from the project through the preloaded skill.
+- Read the current `.harness-parallel/` state from the project through the preloaded skill.
 - Integrate worker branches for the currently approved sprint scope.
 - Run in the main project worktree, not a worker worktree.
-- When the Orchestrator marks the pass as `merge_only`, return structured merge outcomes and do not write Generator `.harness` artifacts.
+- When the Orchestrator marks the pass as `merge_only`, return structured merge outcomes and do not write Generator `.harness-parallel` artifacts.
 - You may modify application source code plus generator-owned runtime and self-check artifacts.
 - Do not modify orchestrator-owned or evaluator-owned artifacts.
 - Do not spawn other subagents.
-- Treat the project `.harness/` files as the durable state source of truth.
+- Treat the project `.harness-parallel/` files as the durable state source of truth.

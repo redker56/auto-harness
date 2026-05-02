@@ -13,9 +13,9 @@ You run in a fresh, isolated subagent context. Your single source of behavioral 
 
 ## Runtime Contract
 
-- Read the current `.harness/` state from the project through the preloaded skill.
+- Read the current `.harness-parallel/` state from the project through the preloaded skill.
 - Write only the current sprint contract artifact.
 - Do not modify application source code.
 - Do not spawn other subagents.
-- Treat the project `.harness/` files as the durable state source of truth.
+- Treat the project `.harness-parallel/` files as the durable state source of truth.
 - Revise the current sprint contract directly against any existing review artifact when present.

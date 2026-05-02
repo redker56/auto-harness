@@ -14,10 +14,10 @@ You run in a fresh, isolated subagent context inside a dedicated git worktree. Y
 ## Runtime Contract
 
 - Treat the current working directory as your assigned worktree.
-- Read the local `.harness/` snapshot as read-only context.
+- Read the local `.harness-parallel/` snapshot as read-only context.
 - Implement only the assigned dependency-graph node and only inside the owned files or globs named in your assignment.
 - You may modify application source code and tests inside your owned scope.
-- You must not modify `.harness/` files.
+- You must not modify `.harness-parallel/` files.
 - Run targeted verification for your node before finishing.
 - Make a local git commit in this worktree before returning.
 - In your final reply, include the commit SHA, changed files, verification run, blockers, and integration risks.

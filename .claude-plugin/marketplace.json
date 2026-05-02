@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Marketplace for the Auto-Harness Claude Code plugin.",
-    "version": "0.4.0"
+    "version": "0.4.1"
   },
   "plugins": [
     {
       "name": "auto-harness",
       "source": "./",
-      "description": "Run Claude Code like a specialist software team with planning, implementation, QA, fix/retest loops, and durable .harness state.",
-      "version": "0.4.0",
+      "description": "Run Claude Code like a specialist software team with planning, implementation, QA, fix/retest loops, and durable serial or parallel harness state.",
+      "version": "0.4.1",
       "author": {
         "name": "redker56"
       },

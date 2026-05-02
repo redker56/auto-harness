@@ -10,16 +10,16 @@ This skill governs Generator **fix integration mode**.
 
 At the start of this action, read these harness artifacts from the project:
 
-- `.harness/status.md`
-- `.harness/intake.md`
-- `.harness/spec.md`
-- `.harness/design-direction.md` when the named defects touch UX, layout, or interaction rules.
-- `.harness/contracts/sprint-XX-contract.md`
-- `.harness/contracts/sprint-XX-review.md` when it exists for the current sprint.
-- `.harness/runtime.md`
-- `.harness/qa/sprint-XX-qa-report.md`
-- `.harness/qa/sprint-XX-retest.md` when the current fix cycle follows a failed retest.
-- `.harness/qa/sprint-XX-fix-log.md` when revising the current sprint fix log.
+- `.harness-parallel/status.md`
+- `.harness-parallel/intake.md`
+- `.harness-parallel/spec.md`
+- `.harness-parallel/design-direction.md` when the named defects touch UX, layout, or interaction rules.
+- `.harness-parallel/contracts/sprint-XX-contract.md`
+- `.harness-parallel/contracts/sprint-XX-review.md` when it exists for the current sprint.
+- `.harness-parallel/runtime.md`
+- `.harness-parallel/qa/sprint-XX-qa-report.md`
+- `.harness-parallel/qa/sprint-XX-retest.md` when the current fix cycle follows a failed retest.
+- `.harness-parallel/qa/sprint-XX-fix-log.md` when revising the current sprint fix log.
 
 Then inspect the current project implementation relevant to this action:
 
@@ -35,7 +35,7 @@ Then read these skill references:
 Follow these rules:
 
 - Merge only the worker branches the Orchestrator names for the current pass.
-- If not all temporary fix nodes are merged yet, perform merge work only and return structured merge results without writing `.harness/qa/sprint-XX-fix-log.md` or updating runtime notes.
+- If not all temporary fix nodes are merged yet, perform merge work only and return structured merge results without writing `.harness-parallel/qa/sprint-XX-fix-log.md` or updating runtime notes.
 - Once all fix-workstream nodes are merged, finish any tightly related cleanup still required for the named defects.
 - Fix only defects named in the current QA or retest context unless a tightly related adjustment is required.
 - Treat the current sprint review, when present, as implementation guidance and cautions that still apply during the fix cycle.
